@@ -21,7 +21,7 @@ public static class AutorunHelper
             }
             if (enable)
             {
-                registryKey.SetValue(key, Assembly.GetEntryAssembly().Location);
+                registryKey.SetValue(key, AppContext.BaseDirectory);
             }
             else
             {
