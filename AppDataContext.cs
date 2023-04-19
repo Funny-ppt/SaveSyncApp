@@ -1,22 +1,19 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using SaveSyncApp.Properties;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using System.Windows.Media.Imaging;
 
 namespace SaveSyncApp
 {
     internal class AppDataContext : INotifyPropertyChanged, IDisposable
     {
         bool _disposed = false;
-        NotifyIcon _notifyIcon;
-        SaveSync _saveSync;
+        TaskbarIcon _notifyIcon;
+        SaveSync? _saveSync;
         LogLevel _logLevel;
 
 
@@ -26,8 +23,8 @@ namespace SaveSyncApp
                    .AddFilter("SaveSync", LogLevel)
                    .AddCustom());
 
-        ServiceCollection _services = null;
-        ServiceProvider _serviceProvider = null;
+        ServiceCollection? _services = null;
+        ServiceProvider? _serviceProvider = null;
         public ServiceProvider ServiceProvider => _serviceProvider ??= RegisterServices();
 
         ServiceProvider RegisterServices()
@@ -45,7 +42,7 @@ namespace SaveSyncApp
             return _services.BuildServiceProvider();
         }
 
-        public NotifyIcon NotifyIcon => _notifyIcon;
+        public TaskbarIcon NotifyIcon => _notifyIcon;
         public LogLevel LogLevel
         {
             get => _logLevel;
@@ -64,7 +61,7 @@ namespace SaveSyncApp
                 }
             }
         }
-        public SaveSync SaveSync
+        public SaveSync? SaveSync
         {
             get => _saveSync;
             set
@@ -86,13 +83,11 @@ namespace SaveSyncApp
 
             _notifyIcon = new()
             {
-                Icon = new System.Drawing.Icon(
-                   App.GetResourceStream(new Uri("app.ico", UriKind.Relative)).Stream
-                ),
-                Visible = true
+                IconSource = new BitmapImage(new Uri("pack://application:,,,/app.ico", UriKind.Absolute)),
+                Visibility = System.Windows.Visibility.Visible,
             };
         }
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void Dispose(bool disposing)
         {

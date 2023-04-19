@@ -1,15 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
-using SaveSyncApp.Properties;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
-
-using NotifyIcon = System.Windows.Forms.NotifyIcon;
 
 namespace SaveSyncApp;
 
