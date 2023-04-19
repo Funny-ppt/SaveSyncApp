@@ -54,7 +54,7 @@ internal sealed partial class Settings {
         }
     }
 
-    private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+    private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
     {
         if (_instant) return;
     }

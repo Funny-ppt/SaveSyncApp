@@ -15,7 +15,7 @@ public static class AutorunHelper
         try
         {
             var registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-            if (registryKey != null)
+            if (registryKey == null)
             {
                 return false;
             }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace SaveSyncApp;
 
@@ -14,12 +13,12 @@ public partial class MainWindow : Window
 
     ContextMenu _runningMenu;
     ContextMenu _idleMenu;
-    StartupControl _startupControl;
+    StartupControl? _startupControl;
 
     internal StartupControl StartupControl => _startupControl ??= new();
 
-    internal Control LastPage = null;
-    internal Control ContentPage
+    internal Control? LastPage = null;
+    internal Control? ContentPage
     {
         get
         {
@@ -35,14 +34,14 @@ public partial class MainWindow : Window
             }
         }
     }
-    internal event EventHandler PageChanged;
+    internal event EventHandler? PageChanged;
 
-    void ShowWindow(object _)
+    void ShowWindow(object? _)
     {
         Show();
         WindowState = WindowState.Normal;
     }
-    void Exit(object _)
+    void Exit(object? _)
     {
         CancelCloseWindow = false;
         Close();

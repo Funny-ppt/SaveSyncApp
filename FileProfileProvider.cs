@@ -12,7 +12,7 @@ public class FileProfileProvider : IProfileProvider
         _path = path;
     }
 
-    public bool TryGetProfile(out Profile profile)
+    public bool TryGetProfile(out Profile? profile)
     {
         profile = null;
         try
