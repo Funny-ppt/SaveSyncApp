@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
-using ToolStripMenuItem = System.Windows.Forms.ToolStripMenuItem;
+using System.Windows.Input;
 
 namespace SaveSyncApp;
 
@@ -13,8 +12,8 @@ public partial class MainWindow : Window
 {
     public bool CancelCloseWindow { get; set; } = true;
 
-    ContextMenuStrip _runningMenu;
-    ContextMenuStrip _idleMenu;
+    ContextMenu _runningMenu;
+    ContextMenu _idleMenu;
     StartupControl _startupControl;
 
     internal StartupControl StartupControl => _startupControl ??= new();
@@ -38,68 +37,51 @@ public partial class MainWindow : Window
     }
     internal event EventHandler PageChanged;
 
+    void ShowWindow(object _)
+    {
+        Show();
+        WindowState = WindowState.Normal;
+    }
+    void Exit(object _)
+    {
+        CancelCloseWindow = false;
+        Close();
+    }
+
     public MainWindow()
     {
         InitializeComponent();
 
-        void ShowWindow(object sender, EventArgs e)
-        {
-            Show();
-            WindowState = WindowState.Normal;
-        }
-        void Exit(object sender, EventArgs e)
-        {
-            CancelCloseWindow = false;
-            Close();
-        }
+        var showWindowCommand = new DelegateCommand(ShowWindow);
+        var exitCommand = new DelegateCommand(Exit);
 
         // 创建运行时托盘菜单
-        var showWindowMeunItem = new ToolStripMenuItem("SaveSync: 运行中");
-        showWindowMeunItem.Click += ShowWindow;
-        var stopMenuItem = new ToolStripMenuItem("停止");
-        stopMenuItem.Click += (sender, e) => {
-            App.Context.SaveSync = null;
-        };
-        var exitMenuItem = new ToolStripMenuItem("退出");
-        exitMenuItem.Click += Exit;
-
-        _runningMenu = new() { Items = { showWindowMeunItem, "-", stopMenuItem, exitMenuItem } };
+        _runningMenu = new ContextMenu();
+        _runningMenu.Items.Add(new MenuItem { Header = "SaveSync: 运行中", Command = showWindowCommand });
+        _runningMenu.Items.Add(new Separator());
+        _runningMenu.Items.Add(new MenuItem { Header = "停止", Command = new DelegateCommand((_) => App.Context.SaveSync = null) });
+        _runningMenu.Items.Add(new MenuItem { Header = "退出", Command = exitCommand });
 
         // 创建未运行时托盘菜单
-        var showWindowMeunItem2 = new ToolStripMenuItem("SaveSync: 未运行");
-        showWindowMeunItem2.Click += ShowWindow;
-        var startMenuItem = new ToolStripMenuItem("运行");
-        startMenuItem.Click += (sender, e) => {
-            App.Context.SaveSync = new(App.Context.ServiceProvider);
-        };
-        var exitMenuItem2 = new ToolStripMenuItem("退出");
-        exitMenuItem2.Click += Exit;
+        _idleMenu = new ContextMenu();
+        _idleMenu.Items.Add(new MenuItem { Header = "SaveSync: 未运行", Command = showWindowCommand });
+        _idleMenu.Items.Add(new Separator());
+        _idleMenu.Items.Add(new MenuItem { Header = "运行", Command = new DelegateCommand((_) => App.Context.SaveSync = new(App.Context.ServiceProvider)) });
+        _idleMenu.Items.Add(new MenuItem { Header = "退出", Command = exitCommand });
 
-        _idleMenu = new() { Items = { showWindowMeunItem2, "-", startMenuItem, exitMenuItem2 } };
-
-        App.Context.NotifyIcon.MouseClick += (sender, e) =>
-        {
-            switch (e.Button)
-            {
-                case System.Windows.Forms.MouseButtons.Left:
-                    Show();
-                    WindowState = WindowState.Normal;
-                    return;
-                default:
-                    return;
-            }
-        };
+        App.Context.NotifyIcon.LeftClickCommand = showWindowCommand;
 
         App.Context.PropertyChanged += (sender, e) =>
         {
             if (e.PropertyName == "SaveSync")
             {
-                App.Context.NotifyIcon.ContextMenuStrip = App.Context.SaveSync == null ? _idleMenu : _runningMenu;
+                App.Context.NotifyIcon.ContextMenu = App.Context.SaveSync == null ? _idleMenu : _runningMenu;
             }
         };
 
+        App.Context.NotifyIcon.ContextMenu = App.Context.SaveSync == null ? _idleMenu : _runningMenu;
         //App.Context.SaveSync = new SaveSync(App.Context.ServiceProvider);
-        GotoStartupPage(null, null);
+        ContentPage = StartupControl;
     }
 
     private void GotoStartupPage(object sender, RoutedEventArgs e)

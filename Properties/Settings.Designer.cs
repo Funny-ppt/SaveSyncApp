@@ -25,18 +25,6 @@ namespace SaveSyncApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string ProfilePath {
-            get {
-                return ((string)(this["ProfilePath"]));
-            }
-            set {
-                this["ProfilePath"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool Startup {
             get {
@@ -44,6 +32,18 @@ namespace SaveSyncApp.Properties {
             }
             set {
                 this["Startup"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ProfilePath {
+            get {
+                return ((string)(this["ProfilePath"]));
+            }
+            set {
+                this["ProfilePath"] = value;
             }
         }
     }

@@ -17,7 +17,7 @@ internal class SaveSync : IDisposable
 {
     static readonly ISet<string> IgnoreProcessNames = new HashSet<string> { "explorer" };
 
-    readonly ILogger<SaveSync> _logger;
+    readonly ILogger<SaveSync>? _logger;
     readonly ITrackPathProvider _trackPathProvider;
     readonly IProfileProvider _profileProvider;
 
@@ -43,7 +43,7 @@ internal class SaveSync : IDisposable
         {
             _profile = pfvm.GetDefaultProfile();
         }
-        
+
         foreach (var path in _profile.TrackPaths)
         {
             _trackPathProvider.AddPath(path);
@@ -84,7 +84,7 @@ internal class SaveSync : IDisposable
         fileWatcher.EnableRaisingEvents = true;
         _watchers[path] = fileWatcher;
 
-        _logger?.LogInformation($"正在监控文件夹: {path}");
+        _logger?.LogInformation("正在监控文件夹: {Path}", path);
 
         void OnChanged(object sender, FileSystemEventArgs e) // 假定每个应用只有一个配置文件夹
         {
@@ -97,7 +97,7 @@ internal class SaveSync : IDisposable
             }
 
             var hWnd = GetForegroundWindow();
-            GetWindowThreadProcessId(hWnd, out var processId);
+            var hResult = GetWindowThreadProcessId(hWnd, out var processId);
 
             if (_trackedProcesses.ContainsKey(processId)) // 如果该进程已经被跟踪，则跳过该进程
             {
@@ -132,11 +132,11 @@ internal class SaveSync : IDisposable
 
             try
             {
-                _logger?.LogDebug($"进程 {processName}[{process.Id}] 正在写入文件 {e.FullPath}");
+                _logger?.LogDebug("前台进程 {ProcessName}[{ProcessId}], 正在写入文件为 {FullPath}", processName, processId, e.FullPath);
 
                 var executablePath = ProcessHelper.GetProcessFilePath(process);
 
-                void UpdateProfile(string friendlyName = null)
+                void UpdateProfile(string? friendlyName = null)
                 {
                     if (_trackedProcesses.TryAdd(processId, process))
                     {
@@ -151,7 +151,7 @@ internal class SaveSync : IDisposable
                                 SavePath = saveFolder,
                                 RecentChangeDate = DateTime.UtcNow,
                             };
-                            _logger?.LogInformation($"已将由{processName}写入的{saveFolder}加入跟踪列表中");
+                            _logger?.LogInformation("已将由 {ProcessName} 写入的 {SaveFolder} 加入跟踪列表中", processName, saveFolder);
 
                         }
 
@@ -161,7 +161,7 @@ internal class SaveSync : IDisposable
 
                 if (ProcessHelper.IsProcessLaunchedBySteam(process))
                 {
-                    _logger?.LogDebug($"捕获到Steam启动的前台进程 {processName}[{processId}] 尝试写入监控目录");
+                    _logger?.LogDebug("捕获到Steam启动的前台进程 {ProcessName}[{OrocessId}] 尝试写入监控目录", processName, processId);
                     var steamFolderPath = GetSteamFolderPath(executablePath);
                     if (steamFolderPath != null)
                     {
@@ -175,12 +175,12 @@ internal class SaveSync : IDisposable
                     }
                     else
                     {
-                        _logger?.LogWarning($"进程 {processName}[{processId}] 由Steam启动, 但未能获取Steam库文件夹名称");
+                        _logger?.LogWarning("进程 {ProcessName}[{ProcessId}] 由Steam启动, 但未能获取Steam库文件夹名称", processName, processId);
                     }
                 }
                 if (FullScreenDetect.IsFullScreen(hWnd))
                 {
-                    _logger?.LogDebug($"捕获到全屏前台进程 {processName}[{processId}] 尝试写入监控目录");
+                    _logger?.LogDebug("捕获到全屏前台进程 {ProcessName}[{ProcessId}] 尝试写入监控目录", processName, processId);
                     var executableWords = GetWords(executablePath).Where(w => w.Length > 2).Select(w => w.ToLower()).ToHashSet();
                     var saveWords = GetWords(e.FullPath).Where(w => w.Length > 2).Select(w => w.ToLower()).ToHashSet();
                     if (executableWords.Intersect(saveWords).Any())
@@ -195,7 +195,7 @@ internal class SaveSync : IDisposable
             }
             catch (Exception ex)
             {
-                _logger?.LogError(ex, ex.Message);
+                _logger?.LogError(ex, "{Message}", ex.Message);
             }
         }
     }
@@ -221,7 +221,7 @@ internal class SaveSync : IDisposable
         return subDirFullPath.StartsWith(fullPath, StringComparison.OrdinalIgnoreCase);
     }
 
-    static string GetSteamFolderPath(string path)
+    static string? GetSteamFolderPath(string path)
     {
         var directoryInfo = new DirectoryInfo(path);
 

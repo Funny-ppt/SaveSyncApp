@@ -25,7 +25,7 @@ public partial class StartupControl : UserControl
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public ViewModel()
         {
@@ -33,7 +33,7 @@ public partial class StartupControl : UserControl
             {
                 if (e.PropertyName == nameof(SaveSync))
                 {
-                    PropertyChanged(IsSaveSyncActive, new(nameof(IsSaveSyncActive)));
+                    PropertyChanged?.Invoke(IsSaveSyncActive, new(nameof(IsSaveSyncActive)));
                 }
             };
         }
@@ -45,7 +45,7 @@ public partial class StartupControl : UserControl
         InitializeComponent();
 
         DataContext = Model = new();
-        App.Current.LogMessageImpl += (msg, name) => Model.Logs += $"{DateTime.Now} {msg}";
+        App.Current.LogMessageImpl += (msg, name) => Model.Logs += $"{DateTime.Now} {msg}\n";
     }
 
     private void SwitchStateButton_Click(object sender, RoutedEventArgs e)
