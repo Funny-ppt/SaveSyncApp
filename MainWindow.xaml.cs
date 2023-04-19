@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using NotifyIcon = System.Windows.Forms.NotifyIcon;
 using ContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
 using ToolStripMenuItem = System.Windows.Forms.ToolStripMenuItem;
 
@@ -21,17 +15,10 @@ public partial class MainWindow : Window
 
     ContextMenuStrip _runningMenu;
     ContextMenuStrip _idleMenu;
-    NotifyIcon _notifyIcon;
+    StartupControl _startupControl;
 
-    internal SaveSync SaveSync
-    {
-        get => App.Current.SaveSync;
-        set
-        {
-            _notifyIcon.ContextMenuStrip = value == null ? _idleMenu : _runningMenu;
-            App.Current.SaveSync = value;
-        }
-    }
+    internal StartupControl StartupControl => _startupControl ??= new();
+
     internal Control LastPage = null;
     internal Control ContentPage
     {
@@ -71,8 +58,7 @@ public partial class MainWindow : Window
         showWindowMeunItem.Click += ShowWindow;
         var stopMenuItem = new ToolStripMenuItem("停止");
         stopMenuItem.Click += (sender, e) => {
-            SaveSync.Dispose();
-            SaveSync = null;
+            App.Context.SaveSync = null;
         };
         var exitMenuItem = new ToolStripMenuItem("退出");
         exitMenuItem.Click += Exit;
@@ -84,24 +70,14 @@ public partial class MainWindow : Window
         showWindowMeunItem2.Click += ShowWindow;
         var startMenuItem = new ToolStripMenuItem("运行");
         startMenuItem.Click += (sender, e) => {
-            SaveSync = new(App.ServiceProvider);
+            App.Context.SaveSync = new(App.Context.ServiceProvider);
         };
         var exitMenuItem2 = new ToolStripMenuItem("退出");
         exitMenuItem2.Click += Exit;
 
         _idleMenu = new() { Items = { showWindowMeunItem2, "-", startMenuItem, exitMenuItem2 } };
 
-        _notifyIcon = new()
-        {
-            Icon = new System.Drawing.Icon(
-               Application.GetResourceStream(
-                 new Uri("app.ico", UriKind.Relative)
-               ).Stream
-            ),
-            ContextMenuStrip = _idleMenu,
-            Visible = true
-        };
-        _notifyIcon.MouseClick += (sender, e) =>
+        App.Context.NotifyIcon.MouseClick += (sender, e) =>
         {
             switch (e.Button)
             {
@@ -114,14 +90,21 @@ public partial class MainWindow : Window
             }
         };
 
-        SaveSync = new SaveSync(App.ServiceProvider);
+        App.Context.PropertyChanged += (sender, e) =>
+        {
+            if (e.PropertyName == "SaveSync")
+            {
+                App.Context.NotifyIcon.ContextMenuStrip = App.Context.SaveSync == null ? _idleMenu : _runningMenu;
+            }
+        };
 
+        //App.Context.SaveSync = new SaveSync(App.Context.ServiceProvider);
         GotoStartupPage(null, null);
     }
 
     private void GotoStartupPage(object sender, RoutedEventArgs e)
     {
-
+        ContentPage = StartupControl;
     }
 
     private void GotoConfigPage(object sender, RoutedEventArgs e)
@@ -140,10 +123,7 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             Hide();
-        }
-        else
-        {
-            _notifyIcon?.Dispose();
+            return;
         }
     }
 }

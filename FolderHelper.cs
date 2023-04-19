@@ -33,8 +33,8 @@ namespace SaveSyncApp
                 if (File.Exists(destFile))
                 {
                     // 如果目标目录文件更老就不写入
-                    FileInfo sourceInfo = new FileInfo(sourceFile);
-                    FileInfo destInfo = new FileInfo(destFile);
+                    var sourceInfo = new FileInfo(sourceFile);
+                    var destInfo = new FileInfo(destFile);
 
                     if (sourceInfo.LastWriteTimeUtc > destInfo.LastWriteTimeUtc)
                     {

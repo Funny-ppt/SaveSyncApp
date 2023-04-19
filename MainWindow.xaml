@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SaveSyncApp"
         mc:Ignorable="d"
-        Title="存档助手" Height="450" Width="800">
+        Title="存档助手" Height="450" Width="800" Closing="WindowClosing">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
@@ -16,7 +16,7 @@
             <ColumnDefinition Width="17*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" >
-            <Button FontSize="18" Margin="5,2" Click="GotoStartupPage">启动与日志</Button>
+            <Button FontSize="18" Margin="5,4,5,2" Click="GotoStartupPage">启动与日志</Button>
             <Button FontSize="18" Margin="5,2" Click="GotoConfigPage">配置</Button>
             <Button FontSize="18" Margin="5,2" Click="GotoNetworkPage">网络</Button>
         </StackPanel>

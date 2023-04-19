@@ -1,12 +1,15 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using SaveSyncApp.Properties;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+
+using NotifyIcon = System.Windows.Forms.NotifyIcon;
 
 namespace SaveSyncApp;
 
@@ -16,46 +19,17 @@ namespace SaveSyncApp;
 public partial class App : Application
 {
     public static new App Current => (App)Application.Current;
+    public new MainWindow MainWindow => (MainWindow)base.MainWindow;
+    internal static AppDataContext Context => Current.DataContext;
 
-    static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
-    {
 #if DEBUG
-        builder.AddDebug();
+    const int ReportCount = 1;
 #else
-        builder
-            .AddFilter("Microsoft", LogLevel.Warning)
-            .AddFilter("System", LogLevel.Warning)
-            .AddFilter("SaveSyncHelper", LogLevel.Information)
-            .AddConsole();
+    const int ReportCount = 3;
 #endif
-    });
-
-    public static readonly string AppDataFolder =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SaveSync");
-    public static readonly string DefaultProfileFile = Path.Combine(AppDataFolder, "profile.json");
-    public static readonly string DefaultSyncFolder = Path.Combine(AppDataFolder, "Saves");
-
-    readonly static string _roamingFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-    readonly static string _documentFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-    public static readonly IEnumerable<string> DefaultTrackPaths = new[] { _roamingFolder, _documentFolder };
-
-
-    static ServiceProvider serviceProvider = null;
-    public static ServiceProvider ServiceProvider => serviceProvider ??= RegisterServices();
-
-    static ServiceProvider RegisterServices()
-    {
-        var services = new ServiceCollection();
-        services.AddSingleton<ITrackPathProvider>(new TrackPathProvider());
-        services.AddSingleton<IProfileProvider>(new FileProfileProvider(DefaultProfileFile));
-        services.AddSingleton<ILoggerFactory>(loggerFactory);
-        return services.BuildServiceProvider();
-    }
-
-
+    internal AppDataContext DataContext { get; } = new();
     readonly Mutex _mutex;
-    readonly Dictionary<Type, int> _exceptionCount = new ();
-    internal SaveSync SaveSync { get; set; }
+    readonly Dictionary<Type, int> _exceptionCount = new();
 
     internal App()
     {
@@ -79,7 +53,7 @@ public partial class App : Application
             _exceptionCount.TryGetValue(exceptionType, out var count);
             _exceptionCount[exceptionType] = ++count;
 
-            if (count >= 3)
+            if (count >= ReportCount)
             {
                 string errorMessage = 
 $@"发生异常: {e.Exception.Message}
@@ -102,6 +76,14 @@ $@"发生异常: {e.Exception.Message}
     {
         base.OnExit(e);
 
-        SaveSync?.Dispose();
+        Context.Dispose();
+    }
+
+
+    public delegate void LogMessageHandler(string message, string name);
+    public event LogMessageHandler LogMessageImpl;
+    public void LogMessage(string message, string name)
+    {
+        LogMessageImpl?.Invoke(message, name);
     }
 }
