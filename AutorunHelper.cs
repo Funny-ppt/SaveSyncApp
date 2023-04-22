@@ -15,13 +15,13 @@ public static class AutorunHelper
         try
         {
             var registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
-            if (registryKey != null)
+            if (registryKey == null)
             {
                 return false;
             }
             if (enable)
             {
-                registryKey.SetValue(key, Assembly.GetEntryAssembly().Location);
+                registryKey.SetValue(key, System.AppContext.BaseDirectory);
             }
             else
             {

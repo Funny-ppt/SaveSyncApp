@@ -2,6 +2,6 @@
 
 public interface IProfileProvider
 {
-    bool TryGetProfile(out Profile profile);
+    bool TryGetProfile(out Profile? profile);
     bool TrySaveProfile(Profile profile);
 }

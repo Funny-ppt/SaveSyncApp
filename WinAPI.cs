@@ -33,9 +33,21 @@ public struct PROCESS_BASIC_INFORMATION
     public IntPtr InheritedFromUniqueProcessId;
 }
 
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+public struct SHFILEINFO
+{
+    public IntPtr hIcon;
+    public int iIcon;
+    public uint dwAttributes;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+    public string szDisplayName;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+    public string szTypeName;
+}
+
 public delegate bool MonitorEnumDelegate(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
 
-public static class WinAPI
+internal static class WinAPI
 {
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern bool CloseHandle(IntPtr hObject);
@@ -69,5 +81,9 @@ public static class WinAPI
 
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern bool QueryFullProcessImageName([In] IntPtr hProcess, [In] int dwFlags, [Out] StringBuilder lpExeName, ref int lpdwSize);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+    public static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbSizeFileInfo, uint uFlags);
+
 
 }

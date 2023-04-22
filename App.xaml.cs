@@ -1,15 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
-using SaveSyncApp.Properties;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
-
-using NotifyIcon = System.Windows.Forms.NotifyIcon;
 
 namespace SaveSyncApp;
 
@@ -20,14 +13,14 @@ public partial class App : Application
 {
     public static new App Current => (App)Application.Current;
     public new MainWindow MainWindow => (MainWindow)base.MainWindow;
-    internal static AppDataContext Context => Current.DataContext;
+    internal static AppContext Context => Current.AppContext;
 
 #if DEBUG
     const int ReportCount = 1;
 #else
     const int ReportCount = 3;
 #endif
-    internal AppDataContext DataContext { get; } = new();
+    internal AppContext AppContext { get; } = new();
     readonly Mutex _mutex;
     readonly Dictionary<Type, int> _exceptionCount = new();
 
@@ -80,9 +73,9 @@ $@"发生异常: {e.Exception.Message}
     }
 
 
-    public delegate void LogMessageHandler(string message, string name);
-    public event LogMessageHandler LogMessageImpl;
-    public void LogMessage(string message, string name)
+    public delegate void LogMessageHandler(string message, string? name);
+    public event LogMessageHandler? LogMessageImpl;
+    public void LogMessage(string message, string? name = null)
     {
         LogMessageImpl?.Invoke(message, name);
     }
