@@ -37,13 +37,25 @@ namespace SaveSyncApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string ProfilePath {
+        [global::System.Configuration.DefaultSettingValueAttribute("<Default>")]
+        public string InternalWorkingDirectory {
             get {
-                return ((string)(this["ProfilePath"]));
+                return ((string)(this["InternalWorkingDirectory"]));
             }
             set {
-                this["ProfilePath"] = value;
+                this["InternalWorkingDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Normal")]
+        public string InternalNotificationLevel {
+            get {
+                return ((string)(this["InternalNotificationLevel"]));
+            }
+            set {
+                this["InternalNotificationLevel"] = value;
             }
         }
     }
