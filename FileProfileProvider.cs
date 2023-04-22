@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using SaveSyncApp.Properties;
+using System.IO;
 using System.Text.Json;
 
 namespace SaveSyncApp;
@@ -21,6 +22,10 @@ public class FileProfileProvider : IProfileProvider
             using var sr = new StreamReader(fs);
             string jsonString = sr.ReadToEnd();
             profile = JsonSerializer.Deserialize<Profile>(jsonString);
+            foreach (var item in profile.Items.Values)
+            {
+                item.IconPath = Path.Combine(Path.GetDirectoryName(_path), "Saves", "SaveSyncCache", $"{item.ProcessName}.ico");
+            }
             return true;
         }
         catch
@@ -31,6 +36,10 @@ public class FileProfileProvider : IProfileProvider
 
     public bool TrySaveProfile(Profile profile)
     {
+        if (profile == null)
+        {
+            return false;
+        }
         try
         {
             var dir = Path.GetDirectoryName(_path);

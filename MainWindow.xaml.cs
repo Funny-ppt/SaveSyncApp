@@ -9,13 +9,22 @@ namespace SaveSyncApp;
 /// </summary>
 public partial class MainWindow : Window
 {
-    public bool CancelCloseWindow { get; set; } = true;
+    public bool CancelCloseWindow { get; set; }
+#if DEBUG
+    = false;
+#else
+    = true;
+#endif
 
     ContextMenu _runningMenu;
     ContextMenu _idleMenu;
     StartupControl? _startupControl;
+    ConfigurationControl? _configurationControl;
+    SavesControl? _savesControl;
 
     internal StartupControl StartupControl => _startupControl ??= new();
+    internal ConfigurationControl ConfigurationControl => _configurationControl ??= new();
+    internal SavesControl SavesControl => _savesControl ??= new();
 
     internal Control? LastPage = null;
     internal Control? ContentPage
@@ -65,7 +74,7 @@ public partial class MainWindow : Window
         _idleMenu = new ContextMenu();
         _idleMenu.Items.Add(new MenuItem { Header = "SaveSync: 未运行", Command = showWindowCommand });
         _idleMenu.Items.Add(new Separator());
-        _idleMenu.Items.Add(new MenuItem { Header = "运行", Command = new DelegateCommand((_) => App.Context.SaveSync = new(App.Context.ServiceProvider)) });
+        _idleMenu.Items.Add(new MenuItem { Header = "运行", Command = new DelegateCommand((_) => App.Context.StartNewSaveSync()) });
         _idleMenu.Items.Add(new MenuItem { Header = "退出", Command = exitCommand });
 
         App.Context.NotifyIcon.LeftClickCommand = showWindowCommand;
@@ -90,12 +99,12 @@ public partial class MainWindow : Window
 
     private void GotoConfigPage(object sender, RoutedEventArgs e)
     {
-
+        ContentPage = ConfigurationControl;
     }
 
-    private void GotoNetworkPage(object sender, RoutedEventArgs e)
+    private void GotoSavePage(object sender, RoutedEventArgs e)
     {
-
+        ContentPage = SavesControl;
     }
 
     private void WindowClosing(object sender, System.ComponentModel.CancelEventArgs e)
