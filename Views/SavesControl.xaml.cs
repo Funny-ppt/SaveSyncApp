@@ -39,9 +39,17 @@ namespace SaveSyncApp
                 {
                     tasks.Add(LoadSaveAsync(item, false));
                 }
-                Task.WaitAll(tasks.ToArray());
-                App.Current.LogMessage($"全部游戏存档已经成功加载", null);
-                Task.Run(() => MessageBox.Show("全部游戏的存档已经成功加载", "存档加载成功"));
+                try
+                {
+                    Task.WaitAll(tasks.ToArray());
+                    App.Current.LogMessage($"全部游戏存档已经成功加载", null);
+                    Task.Run(() => MessageBox.Show("全部游戏的存档已经成功加载", "存档加载成功"));
+                }
+                catch
+                {
+                    App.Current.LogMessage($"加载全部游戏存档失败", null);
+                    Task.Run(() => MessageBox.Show("游戏存档加载失败", "存档加载失败"));
+                }
             });
         }
 
@@ -57,14 +65,22 @@ namespace SaveSyncApp
         {
             if (App.Context.Profile.Items.Values.Contains(item))
             {
-                await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(
-                    Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)),
-                    Path.GetDirectoryName(item.SavePath))
-                );
-                App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档已经成功加载", null);
-                if (notify)
+                try
                 {
-                    Task.Run(() => MessageBox.Show($"游戏 {item.UserFriendlyName} 的存档已经成功加载", "存档加载成功"));
+                    await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(
+                        Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)),
+                        Path.GetDirectoryName(item.SavePath))
+                    );
+                    App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档已经成功加载", null);
+                    if (notify)
+                    {
+                        Task.Run(() => MessageBox.Show($"游戏 {item.UserFriendlyName} 的存档已经成功加载", "存档加载成功"));
+                    }
+                }
+                catch
+                {
+                    App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档加载失败", null);
+                    Task.Run(() => MessageBox.Show($"游戏 {item.UserFriendlyName} 的存档加载失败", "存档加载失败"));
                 }
             }
         }
