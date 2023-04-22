@@ -36,7 +36,6 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
         _services.AddSingleton<IProfileProvider>(new FileProfileProvider(Path.Combine(Settings.Default.WorkingDirectory, "profile.json")));
         _services.AddSingleton<IProfileVersionManagement>(new ProfileVersionManagement());
         _services.AddSingleton<ILoggerFactory>(LoggerFactory);
-        _services.AddSingleton<INotificationProvider>(new NotificationProvider());
         return _services.BuildServiceProvider();
     }
 

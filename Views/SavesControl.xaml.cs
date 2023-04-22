@@ -41,7 +41,7 @@ namespace SaveSyncApp
                 }
                 Task.WaitAll(tasks.ToArray());
                 App.Current.LogMessage($"全部游戏存档已经成功加载", null);
-                NotificationHelper.ShowNotification(1001, $"全部游戏的存档已经成功加载");
+                Task.Run(() => MessageBox.Show("全部游戏的存档已经成功加载", "存档加载成功"));
             });
         }
 
@@ -64,7 +64,7 @@ namespace SaveSyncApp
                 App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档已经成功加载", null);
                 if (notify)
                 {
-                    NotificationHelper.ShowNotification(1001, $"游戏 {item.UserFriendlyName} 的存档已经成功加载");
+                    Task.Run(() => MessageBox.Show($"游戏 {item.UserFriendlyName} 的存档已经成功加载", "存档加载成功"));
                 }
             }
         }
