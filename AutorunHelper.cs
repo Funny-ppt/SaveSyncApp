@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 
 namespace SaveSyncApp;
 
@@ -30,6 +31,23 @@ public static class AutorunHelper
             }
             return true;
         } catch { }
+        return false;
+    }
+    public static bool TryCheckAutorun(string key, out bool enabled)
+    {
+        enabled = false;
+        try
+        {
+            var registryKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            if (registryKey == null)
+            {
+                return false;
+            }
+            var value = registryKey.GetValue(key);
+            enabled = value != null && (string)value == Process.GetCurrentProcess().MainModule.FileName;
+            return true;
+        }
+        catch { }
         return false;
     }
 }

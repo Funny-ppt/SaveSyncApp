@@ -2,6 +2,8 @@
 
 internal enum NotificationLevel
 {
-    Normal,
-    Minimum,
+    正常 = 0,
+    最少 = 1,
+    Normal = 0,
+    Minimum = 1,
 }

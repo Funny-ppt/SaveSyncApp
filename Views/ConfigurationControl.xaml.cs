@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using Windows.Storage.Pickers;
 
 namespace SaveSyncApp;
 
@@ -23,7 +22,6 @@ public partial class ConfigurationControl : UserControl
 
     private void SelectDirectoryButton_Click(object sender, RoutedEventArgs e)
     {
-        //var fp = new FolderPicker();
         using var folderPicker = new System.Windows.Forms.FolderBrowserDialog();
         var result = folderPicker.ShowDialog();
 
