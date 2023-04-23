@@ -37,6 +37,7 @@ internal sealed partial class Settings {
         set
         {
             InternalWorkingDirectory = value?.Trim() ?? "";
+            OnPropertyChanged(this, new(nameof(WorkingDirectory)));
         }
     }
 
@@ -59,7 +60,7 @@ internal sealed partial class Settings {
     {
         if (_instant) return;
 
-        switch (e.SettingKey)
+        switch (e.SettingName)
         {
             case "Startup":
                 if (e.NewValue is bool b && b != Startup)
@@ -75,18 +76,26 @@ internal sealed partial class Settings {
         }
     }
 
-    private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
+    private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
     {
         if (_instant) return;
     }
 
     private void SettingsLoadedHandler(object sender, SettingsLoadedEventArgs e)
     {
+        if (AutorunHelper.TryCheckAutorun("SaveSync", out var enabled))
+        {
+            Startup = enabled;
+        }
+        else
+        {
+            Startup = false;
+        }
         if (string.IsNullOrEmpty(WorkingDirectory) || WorkingDirectory == DefaultPlaceholder)
         {
             WorkingDirectory = DefaultWorkingDirectory;
         }
-        if (InternalNotificationLevel != "Normal" || InternalNotificationLevel != "Minimum")
+        if (!Enum.TryParse<NotificationLevel>(InternalNotificationLevel, out _))
         {
             InternalNotificationLevel = "Normal";
         }

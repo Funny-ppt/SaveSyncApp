@@ -48,7 +48,7 @@ internal class SaveSync : IDisposable
         _notificationProvider = services.GetService<INotificationProvider>();
         _trackPathProvider = services.GetRequiredService<ITrackPathProvider>();
         _profileProvider = services.GetRequiredService<IProfileProvider>();
-        _profile = ProfileHelper.LoadProfile(services);
+        _profile = Profile.LoadProfile(services);
 
         _cts = new CancellationTokenSource();
 
@@ -122,13 +122,13 @@ internal class SaveSync : IDisposable
             void ProcessEndTask(string saveFolder)
             {
                 _logger?.LogInformation("正在跟踪进程 {processName}, 将在进程退出时备份存档", processName);
-                _notificationProvider?.ShowNotification(100000 + processId, $"正在跟踪进程 {processName}, 将在进程退出时备份存档");
+                _notificationProvider?.ShowNotification(100000 + processId, $"正在跟踪进程 {processName}, 将在进程退出时备份存档", false);
                 process.WaitForExit();
                 _logger?.LogInformation("进程 {processName} 结束, 正在备份存档中", processName);
                 FolderHelper.CopyOrOverwriteFolder(saveFolder, _savesDirectory);
                 _profile[processName].RecentChangeDate = DateTime.UtcNow;
                 _logger?.LogInformation("进程{processName}的存档已经备份完成", processName);
-                _notificationProvider?.ShowNotification(100000 + processId, $"进程{processName}的存档已经备份完成");
+                _notificationProvider?.ShowNotification(100000 + processId, $"进程{processName}的存档已经备份完成", false);
                 _trackedProcesses.TryRemove(processId, out _);
             }
 
@@ -290,7 +290,7 @@ internal class SaveSync : IDisposable
 
                 if (_trackedProcesses.Any())
                 {
-                    _notificationProvider?.ShowNotification(1, $"仍有游戏正在运行中, 其存档文件未被同步到目标文件夹");
+                    _notificationProvider?.ShowNotification(1, $"仍有游戏正在运行中, 其存档文件未被同步到目标文件夹", true);
                 }
                 foreach (var trackedProcess in _trackedProcesses.Values)
                 {

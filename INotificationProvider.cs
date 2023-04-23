@@ -2,5 +2,5 @@
 
 public interface INotificationProvider
 {
-    void ShowNotification(int id, string message);
+    void ShowNotification(int id, string message, bool important = false);
 }

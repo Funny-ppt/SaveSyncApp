@@ -58,5 +58,17 @@ namespace SaveSyncApp.Properties {
                 this["InternalNotificationLevel"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SetupWizard {
+            get {
+                return ((bool)(this["SetupWizard"]));
+            }
+            set {
+                this["SetupWizard"] = value;
+            }
+        }
     }
 }
