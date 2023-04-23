@@ -13,6 +13,9 @@ public class FileProfileProvider : IProfileProvider
         _path = path;
     }
 
+    // todo: 其实应该在加载时替换ProfileItem的占位符为地址，保存时替换为占位符
+    // 不过由于需要改动JsonSerializer设置，有点懒了没弄，暂时搞了个ReplacedSavePath使用
+
     public bool TryGetProfile(out Profile? profile)
     {
         profile = null;

@@ -106,5 +106,17 @@ namespace SaveSyncApp.Properties {
                 this["JapaneseMatchRuleEnabled"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RunAfterStart {
+            get {
+                return ((bool)(this["RunAfterStart"]));
+            }
+            set {
+                this["RunAfterStart"] = value;
+            }
+        }
     }
 }

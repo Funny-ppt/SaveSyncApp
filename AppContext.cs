@@ -38,6 +38,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
         _services.AddSingleton<IProfileVersionManagement>(new ProfileVersionManagement());
         _services.AddSingleton<ILoggerFactory>(LoggerFactory);
         _services.AddSingleton<INotificationProvider>(new NotificationProvider());
+        _services.AddSingleton<IUserRequestProvider>(new UserRequestProvider());
         return _services.BuildServiceProvider();
     }
 
@@ -96,6 +97,15 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
+
+    /// <summary>
+    /// 该调用会取消所有未保存的更改
+    /// </summary>
+    public void RefreshProfileCache()
+    {
+        _cachedProfile = null;
+    }
+
     static readonly Regex JapaneseRegex = new(@"[\u0800-\u4e00]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     public void StartNewSaveSync()
     {
@@ -110,7 +120,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
                     e.MatchType = MatchType.FuzzyMatch;
                 }
             }
-            _saveSync.MatchRules += Match;
+            SaveSync.MatchRules += Match;
         }
         if (Settings.Default.JapaneseMatchRuleEnabled)
         {
@@ -124,7 +134,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
                     e.MatchType = MatchType.FuzzyMatch;
                 }
             }
-            _saveSync.MatchRules += Match;
+            SaveSync.MatchRules += Match;
         }
     }
 

@@ -22,6 +22,9 @@ namespace SaveSyncApp
             InitializeComponent();
 
             DataContext = Model = new();
+
+            Loaded += delegate { Model.RefreshProfile(); };
+            Unloaded += delegate { Model.RefreshProfileCache(); };
         }
 
         private void Label_MouseDown(object sender, MouseButtonEventArgs e)
@@ -64,8 +67,8 @@ namespace SaveSyncApp
                 try
                 {
                     await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(
-                        Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)),
-                        Path.GetDirectoryName(item.SavePath))
+                        Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.ReplacedSavePath)),
+                        Path.GetDirectoryName(item.ReplacedSavePath))
                     );
                     if (!notify)
                     {
@@ -88,7 +91,7 @@ namespace SaveSyncApp
         {
             if (sender is Button button && button.Tag is ProfileItem item)
             {
-                Process.Start("explorer.exe", item.SavePath);
+                Process.Start("explorer.exe", item.ReplacedSavePath);
             }
         }
 
@@ -96,7 +99,7 @@ namespace SaveSyncApp
         {
             if (sender is Button button && button.Tag is ProfileItem item)
             {
-                Process.Start("explorer.exe", Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)));
+                Process.Start("explorer.exe", Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.ReplacedSavePath)));
             }
         }
     }

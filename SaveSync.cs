@@ -29,7 +29,7 @@ internal class SaveSync : IDisposable
 
     readonly string _savesDirectory;
     readonly Profile _profile;
-    readonly List<EventHandler<FileChangeMatchEventArgs>> _matchRules;
+    readonly List<EventHandler<FileChangeMatchEventArgs>> _matchRules = new();
     readonly CancellationTokenSource _cts;
     readonly ConcurrentDictionary<string, FileSystemWatcher> _watchers = new();
     readonly ConcurrentDictionary<int, Process> _trackedProcesses = new();
@@ -97,6 +97,15 @@ internal class SaveSync : IDisposable
                 e.MatchFriendlyName = steamFolderName;
                 e.MatchType = MatchType.Match;
             }
+            else
+            {
+                if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
+                {
+                    _logger.LogTrace("current match: {}", nameof(SteamDefaultMatch));
+                    _logger.LogTrace("words: {words}", string.Join(", ", words));
+                    _logger.LogTrace("full path: {path}", e.ChangedFile);
+                }
+            }
         }
         else
         {
@@ -114,6 +123,15 @@ internal class SaveSync : IDisposable
         {
             e.MatchFriendlyName = intersectWords.First();
             e.MatchType = MatchType.Match;
+        }
+        else
+        {
+            if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
+            {
+                _logger.LogTrace("current match: {}", nameof(FullScreenDefaultMatch));
+                _logger.LogTrace("save words: {words}", string.Join(", ", saveWords));
+                _logger.LogTrace("executable words: {words}", string.Join(", ", executableWords));
+            }
         }
     }
 
@@ -151,7 +169,7 @@ internal class SaveSync : IDisposable
 
         void OnChanged(object sender, FileSystemEventArgs e) // 假定每个应用只有一个配置文件夹
         {
-            _logger?.LogTrace("ThreadId {ThreadId} 检测到写入文件{FullPath}, {ChangeType}", Environment.CurrentManagedThreadId, e.FullPath, e.ChangeType);
+            _logger?.LogTrace("检测到写入文件{FullPath}, {ChangeType}", e.FullPath, e.ChangeType);
             foreach (var path in _trackPathProvider.GetIgnorePaths())
             {
                 if (IsSubdirectory(path, e.FullPath))
@@ -201,7 +219,7 @@ internal class SaveSync : IDisposable
 
             try
             {
-                _logger?.LogTrace("ThreadId {ThreadId} 前台进程 {ProcessName}[{ProcessId}]", Environment.CurrentManagedThreadId, processName, processId);
+                _logger?.LogTrace("前台进程 {ProcessName}[{ProcessId}]", processName, processId);
 
                 var executablePath = process.MainModule.FileName;
                 //var executablePath = ProcessHelper.GetProcessFilePath(process);
@@ -218,7 +236,7 @@ internal class SaveSync : IDisposable
                             {
                                 ProcessName = processName,
                                 UserFriendlyName = friendlyName ?? Path.GetFileName(saveFolder),
-                                SavePath = saveFolder,
+                                SavePath = SpecialFolders.ReplacePathsWithPlaceholds(saveFolder),
                                 IconPath = iconPath,
                                 RecentChangeDate = DateTime.UtcNow,
                             };
@@ -339,8 +357,7 @@ internal class SaveSync : IDisposable
         return currDI.FullName;
     }
 
-    static readonly Regex SaveFileRegex = new(@".*save.*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    static readonly Regex WordRegex = new(@"([A-Z]+(?=[A-Z][a-z]+|$|[^a-zA-Z])|[A-Z][a-z]*|[a-z]+|[\u0800-\u4e00]+)", RegexOptions.Compiled);
+    static readonly Regex WordRegex = new(@"([A-Z]+(?=[A-Z][a-z]+|$|[^a-zA-Z])|[A-Z][a-z]*|[a-z]+|[\u0800-\u4e00]+|[\u4e00-\u9fa5]+)", RegexOptions.Compiled);
     static IEnumerable<string> GetWords(string name) => WordRegex.Matches(name).Select(m => m.ToString());
 
     protected virtual void Dispose(bool disposing)
@@ -368,8 +385,8 @@ internal class SaveSync : IDisposable
                 }
                 _trackedProcesses.Clear();
 
-                _profile.TrackPaths = _trackPathProvider.GetPaths().ToList();
-                _profile.IgnorePaths = _trackPathProvider.GetIgnorePaths().ToList();
+                _profile.TrackPaths = _trackPathProvider.GetPaths().Select(SpecialFolders.ReplacePathsWithPlaceholds).ToList();
+                _profile.IgnorePaths = _trackPathProvider.GetIgnorePaths().Select(SpecialFolders.ReplacePathsWithPlaceholds).ToList();
                 _profileProvider.TrySaveProfile(_profile);
             }
 

@@ -13,8 +13,9 @@ namespace SaveSyncApp.Properties;
 //  在保存设置值之前将引发 SettingsSaving 事件。
 internal sealed partial class Settings {
 
+    // 暂时保留原先的值, 但使用空的目录以提示用户设置该目录
     static readonly string DefaultWorkingDirectory =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SaveSync");
+        "" ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SaveSync");
     const string DefaultPlaceholder = "<Default>";
 
     public Settings() {
@@ -65,7 +66,7 @@ internal sealed partial class Settings {
             case "Startup":
                 if (e.NewValue is bool b && b != Startup)
                 {
-                    if (!AutorunHelper.TrySetAutorun("SaveSync", b))
+                    if (!AutorunHelper.TrySetAutorun("SaveSync", b, "--hide-gui --run-after-start"))
                     {
                         e.Cancel = true;
                     }

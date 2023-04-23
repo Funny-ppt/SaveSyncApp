@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SaveSyncApp.Properties;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -17,6 +18,12 @@ public partial class StartupControl : UserControl
 
         DataContext = Model = new();
         App.Current.LogMessageImpl += (msg, name) => Model.Logs += $"{DateTime.Now} {msg}\n";
+
+
+        if (Settings.Default.RunAfterStart || Environment.CommandLine.Contains("--run-after-start"))
+        {
+            App.Context.StartNewSaveSync();
+        }
     }
 
     private void SwitchStateButton_Click(object sender, RoutedEventArgs e)

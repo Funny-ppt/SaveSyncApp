@@ -1,18 +1,10 @@
 ﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Documents;
 
 namespace SaveSyncApp;
 
 public static class AutorunHelper
 {
-    public static bool TrySetAutorun(string key, bool enable = true)
+    public static bool TrySetAutorun(string key, bool enable = true, string? arguments = null)
     {
         try
         {
@@ -23,14 +15,17 @@ public static class AutorunHelper
             }
             if (enable)
             {
-                registryKey.SetValue(key, Process.GetCurrentProcess().MainModule.FileName);
+                string processPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string commandLine = arguments == null ? processPath : $"\"{processPath}\" {arguments}";
+                registryKey.SetValue(key, commandLine);
             }
             else
             {
                 registryKey.DeleteValue(key);
             }
             return true;
-        } catch { }
+        }
+        catch { }
         return false;
     }
     public static bool TryCheckAutorun(string key, out bool enabled)
@@ -43,8 +38,9 @@ public static class AutorunHelper
             {
                 return false;
             }
+            string processPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             var value = registryKey.GetValue(key);
-            enabled = value != null && (string)value == Process.GetCurrentProcess().MainModule.FileName;
+            enabled = value != null && ((string)value).Contains(processPath);
             return true;
         }
         catch { }

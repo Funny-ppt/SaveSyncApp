@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SaveSyncApp.Properties;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -59,6 +60,11 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        if (Environment.CommandLine.Contains("--hide-gui"))
+        {
+            Hide();
+        }
 
         var showWindowCommand = new DelegateCommand(ShowWindow);
         var exitCommand = new DelegateCommand(Exit);
