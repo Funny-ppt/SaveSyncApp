@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -21,7 +22,7 @@ public static class AutorunHelper
             }
             if (enable)
             {
-                registryKey.SetValue(key, System.AppContext.BaseDirectory);
+                registryKey.SetValue(key, Process.GetCurrentProcess().MainModule.FileName);
             }
             else
             {

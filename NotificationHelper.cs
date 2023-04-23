@@ -11,16 +11,16 @@ public static class NotificationHelper
         remove => ToastNotificationManagerCompat.OnActivated -= value;
     }
 
-    public static void ShowNotification(int id, string message) => ShowNotification(id, message, ("确认", "confirm"));
-    public static void ShowNotification(int id, string message, params (string content, string action)[] buttons)
+    public static void ShowNotification(int id, string message, bool important = false) => ShowNotification(id, message, important, ("确认", "confirm"));
+    public static void ShowNotification(int id, string message, bool important, params (string content, string action)[] buttons)
     {
-        if (Settings.Default.NotificationLevel == NotificationLevel.Minimum && id < 100)
+        if (Settings.Default.NotificationLevel == NotificationLevel.Minimum && !important)
         {
             return;
         }
 
         var builder = new ToastContentBuilder()
-            .SetToastScenario(ToastScenario.Reminder)
+            .SetToastScenario(important ? ToastScenario.Reminder : ToastScenario.Default)
             .SetToastDuration(ToastDuration.Short)
             .AddArgument("id", id)
             .AddText(message);

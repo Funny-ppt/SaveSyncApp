@@ -11,5 +11,8 @@
     <Setting Name="InternalNotificationLevel" Type="System.String" Scope="User">
       <Value Profile="(Default)">Normal</Value>
     </Setting>
+    <Setting Name="SetupWizard" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

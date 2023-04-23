@@ -1,6 +1,7 @@
 ﻿using SaveSyncApp.Properties;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -42,14 +43,9 @@ namespace SaveSyncApp
                 try
                 {
                     Task.WaitAll(tasks.ToArray());
-                    App.Current.LogMessage($"全部游戏存档已经成功加载", null);
-                    NotificationHelper.ShowNotification(1001, $"全部游戏的存档已经成功加载");
+                    App.Current.ShowNotification(1003, $"全部游戏的存档已经成功加载", true);
                 }
-                catch
-                {
-                    App.Current.LogMessage($"游戏存档加载失败", null);
-                    NotificationHelper.ShowNotification(1001, $"游戏存档加载失败");
-                }
+                catch { }
             });
         }
 
@@ -71,17 +67,36 @@ namespace SaveSyncApp
                         Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)),
                         Path.GetDirectoryName(item.SavePath))
                     );
-                    App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档已经成功加载", null);
-                    if (notify)
+                    if (!notify)
                     {
-                        NotificationHelper.ShowNotification(1001, $"游戏 {item.UserFriendlyName} 的存档已经成功加载");
+                        App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档已经成功加载");
+                    }
+                    else
+                    {
+                        App.Current.ShowNotification(1001, $"游戏 {item.UserFriendlyName} 的存档已经成功加载", true);
                     }
                 }
                 catch
                 {
-                    App.Current.LogMessage($"游戏存档加载失败", null);
-                    NotificationHelper.ShowNotification(1001, $"游戏存档加载失败");
+                    App.Current.ShowNotification(1002, $"游戏 {item.UserFriendlyName} 的存档加载失败", true);
+                    throw;
                 }
+            }
+        }
+
+        private void CheckLocalSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is ProfileItem item)
+            {
+                Process.Start("explorer.exe", item.SavePath);
+            }
+        }
+
+        private void CheckSyncSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is ProfileItem item)
+            {
+                Process.Start("explorer.exe", Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)));
             }
         }
     }

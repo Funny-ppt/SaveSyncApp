@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:SaveSyncApp"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800" FontSize="14">
     <UserControl.Resources>
         <Style TargetType="Label" x:Key="PropertyDisplayLabelStyle">
             <Setter Property="Background" Value="LightGray" />
@@ -38,39 +38,42 @@
         <Button  FontSize="18" Content="一键同步所有" Margin="5,5,5,0" Click="SyncAllButton_Click"/>
         <ProgressBar Grid.Column="1" Margin="3,5,5,0" />
 
-        <ListBox Margin="5" Grid.Row="1" Grid.ColumnSpan="2"
-                 ItemsSource="{Binding Path=Profile.Items.Values}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Border>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="1*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="1*"/>
-                                <RowDefinition Height="1*"/>
-                                <RowDefinition Height="1*"/>
-                                <RowDefinition Height="auto"/>
-                            </Grid.RowDefinitions>
+        <ScrollViewer Margin="5" Grid.Row="1" Grid.ColumnSpan="2">
+            <ListBox ItemsSource="{Binding Path=Profile.Items.Values}" HorizontalContentAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="1*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="1*"/>
+                                    <RowDefinition Height="1*"/>
+                                    <RowDefinition Height="1*"/>
+                                    <RowDefinition Height="auto"/>
+                                </Grid.RowDefinitions>
 
-                            <Image Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Width="128" Height="128"
+                                <Image Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Width="128" Height="128"
                                    Source="{Binding IconPath}" Stretch="Uniform" Margin="3" VerticalAlignment="Center" />
 
-                            <Label Grid.Column="1" Grid.Row="0" Margin="3" Content="进程名称" />
-                            <Label Grid.Column="2" Grid.Row="0" Content="{Binding ProcessName}" Style="{StaticResource PropertyDisplayLabelStyle}" />
-                            <Label Grid.Column="1" Grid.Row="1" Margin="3" Content="友好名称" />
-                            <Label Grid.Column="2" Grid.Row="1" Content="{Binding UserFriendlyName}" Style="{StaticResource PropertyDisplayLabelStyle}" />
-                            <Label Grid.Column="1" Grid.Row="2" Margin="3" Content="存档位置" />
-                            <Label Grid.Column="2" Grid.Row="2" Content="{Binding SavePath}" Style="{StaticResource PropertyDisplayLabelStyle}" />
+                                <Label Grid.Column="1" Grid.Row="0" Margin="3" Content="进程名称" />
+                                <Label Grid.Column="2" Grid.Row="0" Content="{Binding ProcessName}" Style="{StaticResource PropertyDisplayLabelStyle}" />
+                                <Label Grid.Column="1" Grid.Row="1" Margin="3" Content="友好名称" />
+                                <Label Grid.Column="2" Grid.Row="1" Content="{Binding UserFriendlyName}" Style="{StaticResource PropertyDisplayLabelStyle}" />
+                                <Label Grid.Column="1" Grid.Row="2" Margin="3" Content="存档位置" />
+                                <Label Grid.Column="2" Grid.Row="2" Content="{Binding SavePath}" Style="{StaticResource PropertyDisplayLabelStyle}" />
 
-                            <Button Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="3" Margin="3" FontSize="16" Content="同步存档" Click="SyncButton_Click" Tag="{Binding}" />
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                                <Button Grid.Column="0" Grid.Row="3" Margin="3" FontSize="16" Content="查看本地存档" Click="CheckLocalSaveButton_Click" Tag="{Binding}" />
+                                <Button Grid.Column="1" Grid.Row="3" Margin="3" FontSize="16" Content="查看同步存档" Click="CheckSyncSaveButton_Click" Tag="{Binding}" />
+                                <Button Grid.Column="2" Grid.Row="3" Margin="3" FontSize="16" Content="同步存档" Click="SyncButton_Click" Tag="{Binding}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
     </Grid>
 </UserControl>

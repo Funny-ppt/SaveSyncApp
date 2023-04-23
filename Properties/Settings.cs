@@ -59,7 +59,7 @@ internal sealed partial class Settings {
     {
         if (_instant) return;
 
-        switch (e.SettingKey)
+        switch (e.SettingName)
         {
             case "Startup":
                 if (e.NewValue is bool b && b != Startup)
@@ -75,7 +75,7 @@ internal sealed partial class Settings {
         }
     }
 
-    private void PropertyChangedHandler(object? sender, PropertyChangedEventArgs e)
+    private void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
     {
         if (_instant) return;
     }

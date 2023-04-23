@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using SaveSyncApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
@@ -70,6 +72,7 @@ $@"发生异常: {e.Exception.Message}
         base.OnExit(e);
 
         Context.Dispose();
+        Settings.Default.Save();
     }
 
 
@@ -78,5 +81,10 @@ $@"发生异常: {e.Exception.Message}
     public void LogMessage(string message, string? name = null)
     {
         LogMessageImpl?.Invoke(message, name);
+    }
+    public void ShowNotification(int id, string message, bool important = false)
+    {
+        LogMessage($"(AppNotification{(important? ",Important" : "")}) [{id}] {message}");
+        NotificationHelper.ShowNotification(id, message, important);
     }
 }

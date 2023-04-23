@@ -77,7 +77,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     }
 
     // todo: 如果_cachedProfile不为null, 则创建SaveSync之前应该先保存
-    public Profile Profile => _saveSync?.Profile ?? (_cachedProfile ??= ProfileHelper.LoadProfile(ServiceProvider));
+    public Profile Profile => _saveSync?.Profile ?? (_cachedProfile ??= Profile.LoadProfile(ServiceProvider));
 
     public AppContext()
     {
