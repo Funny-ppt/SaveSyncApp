@@ -2,8 +2,7 @@
 
 internal enum NotificationLevel
 {
-    正常 = 0,
-    最少 = 1,
-    Normal = 0,
-    Minimum = 1,
+    Normal = 1,
+    WarnsOnly = 2,
+    ErrorsOnly = 3,
 }

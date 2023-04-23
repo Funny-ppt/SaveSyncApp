@@ -11,7 +11,6 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
-using System.Windows;
 
 namespace SaveSyncApp;
 
@@ -22,17 +21,25 @@ internal class SaveSync : IDisposable
 
     readonly ILogger<SaveSync>? _logger;
     readonly INotificationProvider? _notificationProvider;
+    readonly IUserRequestProvider? _userRequestProvider;
     readonly ITrackPathProvider _trackPathProvider;
     readonly IProfileProvider _profileProvider;
 
     bool _disposed = false;
+
     readonly string _savesDirectory;
     readonly Profile _profile;
+    readonly List<EventHandler<FileChangeMatchEventArgs>> _matchRules;
     readonly CancellationTokenSource _cts;
     readonly ConcurrentDictionary<string, FileSystemWatcher> _watchers = new();
     readonly ConcurrentDictionary<int, Process> _trackedProcesses = new();
 
     public Profile Profile => _profile;
+    public event EventHandler<FileChangeMatchEventArgs> MatchRules
+    {
+        add => _matchRules.Add(value);
+        remove => _matchRules.Remove(value);
+    }
 
     public SaveSync(IServiceProvider services, string workingDirectory)
     {
@@ -46,6 +53,7 @@ internal class SaveSync : IDisposable
         _logger = services.GetService<ILoggerFactory>()?.CreateLogger<SaveSync>();
         _logger?.LogDebug("SaveSync正在输出调试日志");
         _notificationProvider = services.GetService<INotificationProvider>();
+        _userRequestProvider = services.GetService<IUserRequestProvider>();
         _trackPathProvider = services.GetRequiredService<ITrackPathProvider>();
         _profileProvider = services.GetRequiredService<IProfileProvider>();
         _profile = Profile.LoadProfile(services);
@@ -72,6 +80,56 @@ internal class SaveSync : IDisposable
                     return;
             }
         };
+    }
+
+    void SteamDefaultMatch(object? sender,FileChangeMatchEventArgs e)
+    {
+        _logger?.LogDebug("捕获到Steam启动的前台进程 {ProcessName}", Path.GetFileName(e.ForegroundProcessFile));
+
+        var steamFolderPath = GetSteamFolderPath(e.ForegroundProcessFile);
+        if (steamFolderPath != null)
+        {
+            var steamFolderName = Path.GetFileName(steamFolderPath);
+            var words = GetWords(steamFolderName);
+            var fullPathLowerCase = e.ChangedFile.ToLower();
+            if (words.Where(w => w.Length > 2 && fullPathLowerCase.Contains(w.ToLower())).Any())
+            {
+                e.MatchFriendlyName = steamFolderName;
+                e.MatchType = MatchType.Match;
+            }
+        }
+        else
+        {
+            _logger?.LogWarning("进程 {ProcessName} 由Steam启动, 但未能获取Steam库文件夹名称", Path.GetFileName(e.ForegroundProcessFile));
+        }
+    }
+    void FullScreenDefaultMatch(object? sender,FileChangeMatchEventArgs e)
+    {
+        _logger?.LogDebug("捕获到全屏前台进程 {ProcessName}", Path.GetFileName(e.ForegroundProcessFile));
+
+        var executableWords = GetWords(e.ForegroundProcessFile).Where(w => w.Length > 2).Select(w => w.ToLower()).ToHashSet();
+        var saveWords = GetWords(e.ChangedFile).Where(w => w.Length > 2).Select(w => w.ToLower()).ToHashSet();
+        var intersectWords = executableWords.Intersect(saveWords).Except(IgnoreWords);
+        if (intersectWords.Any())
+        {
+            e.MatchFriendlyName = intersectWords.First();
+            e.MatchType = MatchType.Match;
+        }
+    }
+
+    void RequestUserConfirm(FileChangeMatchEventArgs e, string savePath, Action<IDictionary<string, object>> callback)
+    {
+        if (_userRequestProvider == null)
+        {
+            return;
+        }
+
+        var message = $"前台窗口名称: {e.ForegroundWindowTitle}\n" +
+                      $"前台窗口程序: {e.ForegroundProcessFile}\n" +
+                      $"识别到的存档地址: {savePath}\n\n" +
+                      $"是否确定为存档位置?";
+        _userRequestProvider.ShowRequest(NotificationId.RequestUserConfirm, message,
+            new []{("确定", "confirm"), ("取消", "cancel")}, callback);
     }
 
     void AddWatcher(string path)
@@ -119,16 +177,16 @@ internal class SaveSync : IDisposable
             }
 
             // 等待进程退出，退出后复制文件并更新修改日期
-            void ProcessEndTask(string saveFolder)
+            void TraceProcessTask(string saveFolder)
             {
                 _logger?.LogInformation("正在跟踪进程 {processName}, 将在进程退出时备份存档", processName);
-                _notificationProvider?.ShowNotification(100000 + processId, $"正在跟踪进程 {processName}, 将在进程退出时备份存档", false);
+                _notificationProvider?.ShowNotification(NotificationId.NotifyTracing, $"正在跟踪进程 {processName}, 将在进程退出时备份存档");
                 process.WaitForExit();
                 _logger?.LogInformation("进程 {processName} 结束, 正在备份存档中", processName);
                 FolderHelper.CopyOrOverwriteFolder(saveFolder, _savesDirectory);
                 _profile[processName].RecentChangeDate = DateTime.UtcNow;
-                _logger?.LogInformation("进程{processName}的存档已经备份完成", processName);
-                _notificationProvider?.ShowNotification(100000 + processId, $"进程{processName}的存档已经备份完成", false);
+                _logger?.LogInformation("进程 {processName} 的存档已经备份完成", processName);
+                _notificationProvider?.ShowNotification(NotificationId.NotifySaveSuccess, $"进程{processName}的存档已经备份完成");
                 _trackedProcesses.TryRemove(processId, out _);
             }
 
@@ -136,7 +194,7 @@ internal class SaveSync : IDisposable
             {
                 if (_trackedProcesses.TryAdd(processId, process))
                 {
-                    Task.Run(() => ProcessEndTask(_profile[processName].SavePath), _cts.Token);
+                    Task.Run(() => TraceProcessTask(_profile[processName].SavePath), _cts.Token);
                 }
                 return;
             }
@@ -148,12 +206,10 @@ internal class SaveSync : IDisposable
                 var executablePath = process.MainModule.FileName;
                 //var executablePath = ProcessHelper.GetProcessFilePath(process);
 
-                void UpdateProfile(string? friendlyName = null)
+                void UpdateProfile(string saveFolder, string? friendlyName = null)
                 {
                     if (_trackedProcesses.TryAdd(processId, process))
                     {
-                        var saveFolder = GetSubfolderName(path, e.FullPath);
-
                         if (!_profile.Items.ContainsKey(processName)) // 如果对应的进程没有配置信息，则添加相应信息
                         {
                             var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
@@ -170,39 +226,52 @@ internal class SaveSync : IDisposable
 
                         }
 
-                        Task.Run(() => ProcessEndTask(saveFolder), _cts.Token);
+                        Task.Run(() => TraceProcessTask(saveFolder), _cts.Token);
                     }
                 }
 
-                if (ProcessHelper.IsProcessLaunchedBySteam(process))
+                var launchBySteam = ProcessHelper.IsProcessLaunchedBySteam(process);
+                var fullScreen = FullScreenDetect.IsFullScreen(hWnd);
+                var rules = new List<EventHandler<FileChangeMatchEventArgs>>();
+                if (launchBySteam)
                 {
-                    _logger?.LogDebug("ThreadId {ThreadId} 捕获到Steam启动的前台进程 {ProcessName}[{OrocessId}]", Environment.CurrentManagedThreadId, processName, processId);
-                    var steamFolderPath = GetSteamFolderPath(executablePath);
-                    if (steamFolderPath != null)
-                    {
-                        var steamFolderName = Path.GetFileName(steamFolderPath);
-                        var words = GetWords(steamFolderName);
-                        var fullPathLowerCase = e.FullPath.ToLower();
-                        if (words.Where(w => w.Length > 2 && fullPathLowerCase.Contains(w.ToLower())).Any())
-                        {
-                            UpdateProfile(steamFolderName);
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        _logger?.LogWarning("ThreadId {ThreadId} 进程 {ProcessName}[{ProcessId}] 由Steam启动, 但未能获取Steam库文件夹名称", Environment.CurrentManagedThreadId, processName, processId);
-                    }
+                    rules.Add(SteamDefaultMatch);
                 }
-                if (FullScreenDetect.IsFullScreen(hWnd))
+                if (fullScreen)
                 {
-                    _logger?.LogDebug("ThreadId {ThreadId} 捕获到全屏前台进程 {ProcessName}[{ProcessId}]", Environment.CurrentManagedThreadId, processName, processId);
-                    var executableWords = GetWords(executablePath).Where(w => w.Length > 2).Select(w => w.ToLower()).ToHashSet();
-                    var saveWords = GetWords(e.FullPath).Where(w => w.Length > 2).Select(w => w.ToLower()).ToHashSet();
-                    var intersectWords = executableWords.Intersect(saveWords).Except(IgnoreWords);
-                    if (intersectWords.Any())
+                    rules.Add(FullScreenDefaultMatch);
+                }
+                if (launchBySteam || fullScreen)
+                {
+                    rules.AddRange(_matchRules);
+                    var args = new FileChangeMatchEventArgs(e.FullPath, executablePath, process.MainWindowTitle);
+                    foreach (var rule in rules)
                     {
-                        UpdateProfile(intersectWords.First());
+                        rule(this, args);
+                        string saveFolder;
+                        switch (args.MatchType)
+                        {
+                            case MatchType.Match:
+                                saveFolder = GetSubfolderName(path, e.FullPath);
+                                UpdateProfile(saveFolder, args.MatchFriendlyName);
+                                return;
+                            case MatchType.FuzzyMatch:
+                                saveFolder = GetSubfolderName(path, e.FullPath);
+                                RequestUserConfirm(args, saveFolder, (e) =>
+                                {
+                                    if (e.TryGetValue("action", out var action) && action is string action_str && action_str == "confirm")
+                                    {
+                                        UpdateProfile(saveFolder, args.MatchFriendlyName);
+                                    }
+                                    else
+                                    {
+                                        _trackPathProvider.AddIgnorePath(saveFolder);
+                                    }
+                                });
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }
@@ -270,7 +339,8 @@ internal class SaveSync : IDisposable
         return currDI.FullName;
     }
 
-    static readonly Regex WordRegex = new(@"([A-Z]+(?=[A-Z][a-z]+|$|[^a-zA-Z])|[A-Z][a-z]*|[a-z]+)", RegexOptions.Compiled);
+    static readonly Regex SaveFileRegex = new(@".*save.*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    static readonly Regex WordRegex = new(@"([A-Z]+(?=[A-Z][a-z]+|$|[^a-zA-Z])|[A-Z][a-z]*|[a-z]+|[\u0800-\u4e00]+)", RegexOptions.Compiled);
     static IEnumerable<string> GetWords(string name) => WordRegex.Matches(name).Select(m => m.ToString());
 
     protected virtual void Dispose(bool disposing)
@@ -290,7 +360,7 @@ internal class SaveSync : IDisposable
 
                 if (_trackedProcesses.Any())
                 {
-                    _notificationProvider?.ShowNotification(1, $"仍有游戏正在运行中, 其存档文件未被同步到目标文件夹", true);
+                    _notificationProvider?.ShowNotification(NotificationId.WarnExitWithoutSave, $"仍有游戏正在运行中, 其存档文件未被同步到目标文件夹", true);
                 }
                 foreach (var trackedProcess in _trackedProcesses.Values)
                 {

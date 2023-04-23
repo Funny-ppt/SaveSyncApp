@@ -43,7 +43,7 @@ namespace SaveSyncApp
                 try
                 {
                     Task.WaitAll(tasks.ToArray());
-                    App.Current.ShowNotification(1003, $"全部游戏的存档已经成功加载", true);
+                    App.Current.ShowNotification(AppNotificationId.NotifyLoadAllSuccess, $"全部游戏的存档已经成功加载", true);
                 }
                 catch { }
             });
@@ -73,12 +73,12 @@ namespace SaveSyncApp
                     }
                     else
                     {
-                        App.Current.ShowNotification(1001, $"游戏 {item.UserFriendlyName} 的存档已经成功加载", true);
+                        App.Current.ShowNotification(AppNotificationId.NotifyLoadSuccess, $"游戏 {item.UserFriendlyName} 的存档已经成功加载", true);
                     }
                 }
                 catch
                 {
-                    App.Current.ShowNotification(1002, $"游戏 {item.UserFriendlyName} 的存档加载失败", true);
+                    App.Current.ShowNotification(AppNotificationId.ErrorFailToSave, $"游戏 {item.UserFriendlyName} 的存档加载失败", true);
                     throw;
                 }
             }

@@ -6,6 +6,7 @@ using SaveSyncApp.Properties;
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
 
 namespace SaveSyncApp;
@@ -95,9 +96,36 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    static readonly Regex JapaneseRegex = new(@"[\u0800-\u4e00]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     public void StartNewSaveSync()
     {
         SaveSync = new SaveSync(ServiceProvider, Settings.Default.WorkingDirectory);
+
+        if (Settings.Default.SaveFileMatchEnabled)
+        {
+            void Match(object? sender, FileChangeMatchEventArgs e)
+            {
+                if (Regex.IsMatch(e.ChangedFile, Settings.Default.SaveFilePattern, RegexOptions.IgnoreCase))
+                {
+                    e.MatchType = MatchType.FuzzyMatch;
+                }
+            }
+            _saveSync.MatchRules += Match;
+        }
+        if (Settings.Default.JapaneseMatchRuleEnabled)
+        {
+            void Match(object? sender, FileChangeMatchEventArgs e)
+            {
+                var fileContainsJP = JapaneseRegex.IsMatch(e.ChangedFile);
+                var processFileContainsJP = JapaneseRegex.IsMatch(e.ForegroundProcessFile);
+                var windowTitleContainsJP = JapaneseRegex.IsMatch(e.ForegroundWindowTitle);
+                if (fileContainsJP && (processFileContainsJP || windowTitleContainsJP))
+                {
+                    e.MatchType = MatchType.FuzzyMatch;
+                }
+            }
+            _saveSync.MatchRules += Match;
+        }
     }
 
     protected virtual void Dispose(bool disposing)

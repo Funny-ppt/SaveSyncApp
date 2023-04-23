@@ -31,6 +31,11 @@ public partial class ConfigurationControl : UserControl
         }
     }
 
+    private void RestartSaveSyncButton_Click(object sender, RoutedEventArgs e)
+    {
+        App.Context.StartNewSaveSync();
+    }
+
     ////preserverd
     //private Grid CreatePropertyGrid(string key, string value, string type = nameof(TextBox), object[]? candidateValues = null)
     //{
