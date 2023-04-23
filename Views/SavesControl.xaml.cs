@@ -22,6 +22,9 @@ namespace SaveSyncApp
             InitializeComponent();
 
             DataContext = Model = new();
+
+            Loaded += delegate { Model.RefreshProfile(); };
+            Unloaded += delegate { Model.RefreshProfileCache(); };
         }
 
         private void Label_MouseDown(object sender, MouseButtonEventArgs e)
@@ -43,7 +46,7 @@ namespace SaveSyncApp
                 try
                 {
                     Task.WaitAll(tasks.ToArray());
-                    App.Current.ShowNotification(1003, $"全部游戏的存档已经成功加载", true);
+                    App.Current.ShowNotification(AppNotificationId.NotifyLoadAllSuccess, $"全部游戏的存档已经成功加载", true);
                 }
                 catch { }
             });
@@ -64,8 +67,8 @@ namespace SaveSyncApp
                 try
                 {
                     await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(
-                        Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)),
-                        Path.GetDirectoryName(item.SavePath))
+                        Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.ReplacedSavePath)),
+                        Path.GetDirectoryName(item.ReplacedSavePath))
                     );
                     if (!notify)
                     {
@@ -73,12 +76,12 @@ namespace SaveSyncApp
                     }
                     else
                     {
-                        App.Current.ShowNotification(1001, $"游戏 {item.UserFriendlyName} 的存档已经成功加载", true);
+                        App.Current.ShowNotification(AppNotificationId.NotifyLoadSuccess, $"游戏 {item.UserFriendlyName} 的存档已经成功加载", true);
                     }
                 }
                 catch
                 {
-                    App.Current.ShowNotification(1002, $"游戏 {item.UserFriendlyName} 的存档加载失败", true);
+                    App.Current.ShowNotification(AppNotificationId.ErrorFailToSave, $"游戏 {item.UserFriendlyName} 的存档加载失败", true);
                     throw;
                 }
             }
@@ -88,7 +91,7 @@ namespace SaveSyncApp
         {
             if (sender is Button button && button.Tag is ProfileItem item)
             {
-                Process.Start("explorer.exe", item.SavePath);
+                Process.Start("explorer.exe", item.ReplacedSavePath);
             }
         }
 
@@ -96,7 +99,7 @@ namespace SaveSyncApp
         {
             if (sender is Button button && button.Tag is ProfileItem item)
             {
-                Process.Start("explorer.exe", Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.SavePath)));
+                Process.Start("explorer.exe", Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.ReplacedSavePath)));
             }
         }
     }

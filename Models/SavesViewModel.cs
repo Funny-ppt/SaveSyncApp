@@ -8,6 +8,16 @@ public class SavesViewModel : INotifyPropertyChanged
     public bool IsSaveSyncActive => App.Context.SaveSync != null;
     public Profile Profile => App.Context.Profile;
 
+    public void RefreshProfile()
+    {
+        PropertyChanged?.Invoke(this, new(nameof(Profile)));
+    }
+    public void RefreshProfileCache()
+    {
+        App.Context.RefreshProfileCache();
+        PropertyChanged?.Invoke(this, new(nameof(Profile)));
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public SavesViewModel()

@@ -6,6 +6,7 @@ using SaveSyncApp.Properties;
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
 
 namespace SaveSyncApp;
@@ -36,6 +37,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
         _services.AddSingleton<IProfileProvider>(new FileProfileProvider(Path.Combine(Settings.Default.WorkingDirectory, "profile.json")));
         _services.AddSingleton<IProfileVersionManagement>(new ProfileVersionManagement());
         _services.AddSingleton<ILoggerFactory>(LoggerFactory);
+        _services.AddSingleton<IUserRequestProvider>(new UserRequestProvider());
         return _services.BuildServiceProvider();
     }
 
@@ -94,9 +96,45 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
+
+    /// <summary>
+    /// 该调用会取消所有未保存的更改
+    /// </summary>
+    public void RefreshProfileCache()
+    {
+        _cachedProfile = null;
+    }
+
+    static readonly Regex JapaneseRegex = new(@"[\u0800-\u4e00]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     public void StartNewSaveSync()
     {
         SaveSync = new SaveSync(ServiceProvider, Settings.Default.WorkingDirectory);
+
+        if (Settings.Default.SaveFileMatchEnabled)
+        {
+            void Match(object? sender, FileChangeMatchEventArgs e)
+            {
+                if (Regex.IsMatch(e.ChangedFile, Settings.Default.SaveFilePattern, RegexOptions.IgnoreCase))
+                {
+                    e.MatchType = MatchType.FuzzyMatch;
+                }
+            }
+            SaveSync.MatchRules += Match;
+        }
+        if (Settings.Default.JapaneseMatchRuleEnabled)
+        {
+            void Match(object? sender, FileChangeMatchEventArgs e)
+            {
+                var fileContainsJP = JapaneseRegex.IsMatch(e.ChangedFile);
+                var processFileContainsJP = JapaneseRegex.IsMatch(e.ForegroundProcessFile);
+                var windowTitleContainsJP = JapaneseRegex.IsMatch(e.ForegroundWindowTitle);
+                if (fileContainsJP && (processFileContainsJP || windowTitleContainsJP))
+                {
+                    e.MatchType = MatchType.FuzzyMatch;
+                }
+            }
+            SaveSync.MatchRules += Match;
+        }
     }
 
     protected virtual void Dispose(bool disposing)

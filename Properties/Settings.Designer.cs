@@ -70,5 +70,53 @@ namespace SaveSyncApp.Properties {
                 this["SetupWizard"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(".*save.*")]
+        public string SaveFilePattern {
+            get {
+                return ((string)(this["SaveFilePattern"]));
+            }
+            set {
+                this["SaveFilePattern"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SaveFileMatchEnabled {
+            get {
+                return ((bool)(this["SaveFileMatchEnabled"]));
+            }
+            set {
+                this["SaveFileMatchEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool JapaneseMatchRuleEnabled {
+            get {
+                return ((bool)(this["JapaneseMatchRuleEnabled"]));
+            }
+            set {
+                this["JapaneseMatchRuleEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RunAfterStart {
+            get {
+                return ((bool)(this["RunAfterStart"]));
+            }
+            set {
+                this["RunAfterStart"] = value;
+            }
+        }
     }
 }

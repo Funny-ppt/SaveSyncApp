@@ -31,6 +31,7 @@ public partial class App : Application
         _mutex = new Mutex(true, $"_SaveSync_{Environment.CurrentDirectory.Replace('\\', '_')}", out bool createNew);
         if (!createNew)
         {
+            MessageBox.Show("已经有一个SaveSync在运行!", "SaveSync");
             Shutdown();
         }
     }

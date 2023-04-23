@@ -14,5 +14,17 @@
     <Setting Name="SetupWizard" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="SaveFilePattern" Type="System.String" Scope="User">
+      <Value Profile="(Default)">.*save.*</Value>
+    </Setting>
+    <Setting Name="SaveFileMatchEnabled" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="JapaneseMatchRuleEnabled" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="RunAfterStart" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

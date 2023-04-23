@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace SaveSyncApp;
 
@@ -16,6 +13,7 @@ public class TrackPathProvider : ITrackPathProvider
 
     public void AddPath(string path)
     {
+        path = SpecialFolders.ReplacePlaceholdersWithPaths(path);
         _paths.Add(path);
         OnChanged?.Invoke(this, new (path, ChangeAction.Add));
     }
@@ -38,6 +36,7 @@ public class TrackPathProvider : ITrackPathProvider
 
     public void AddIgnorePath(string path)
     {
+        path = SpecialFolders.ReplacePlaceholdersWithPaths(path);
         _ignorePaths.Add(path);
     }
     public void AddIgnorePaths(IEnumerable<string> paths)

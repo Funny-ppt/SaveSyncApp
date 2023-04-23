@@ -1,18 +1,13 @@
-﻿using SaveSyncApp.Properties;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using static SaveSyncApp.SpecialFolders;
 
 namespace SaveSyncApp;
 
 internal class ProfileVersionManagement : IProfileVersionManagement
 {
-    readonly static string _userProfileFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-    readonly static string _applicationDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-    readonly static string _applicationDataFolder2 = Path.Combine(_userProfileFolder, "AppData", "LocalLow");
-    readonly static string _documentFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-    public static readonly IEnumerable<string> DefaultTrackPaths = new[] { _applicationDataFolder, _applicationDataFolder2, _documentFolder };
-    readonly static string _qqDataFolder = Path.Combine(_documentFolder, "Tencent Files");
+    public static readonly IEnumerable<string> DefaultTrackPaths = new[] { ApplicationDataPlaceholder, ApplicationDataPlaceholder2, DocumentPlaceholder };
+    readonly static string _qqDataFolder = Path.Combine(DocumentFolder, "Tencent Files");
     public static readonly IEnumerable<string> DefaultIgnorePaths = new[] { _qqDataFolder };
     public int CurrentVersion => 2;
 
