@@ -3,6 +3,7 @@ using System;
 using System.Configuration;
 using System.ComponentModel;
 using System.IO;
+using System.Windows;
 
 namespace SaveSyncApp.Properties;
 
@@ -41,6 +42,13 @@ internal sealed partial class Settings {
             OnPropertyChanged(this, new(nameof(WorkingDirectory)));
         }
     }
+
+    public Visibility DebugVisibility =>
+#if DEBUG
+        Visibility.Visible;
+#else
+        Visibility.Collapsed;
+#endif
 
     public NotificationLevel NotificationLevel
     {

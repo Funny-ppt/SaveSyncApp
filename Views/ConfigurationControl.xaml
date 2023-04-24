@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:SaveSyncApp"
              xmlns:prop="clr-namespace:SaveSyncApp.Properties"
+             xmlns:log="clr-namespace:Microsoft.Extensions.Logging;assembly=Microsoft.Extensions.Logging.Abstractions"
              x:Class="SaveSyncApp.ConfigurationControl"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
@@ -65,6 +66,15 @@
                         <prop:NotificationLevel>Normal</prop:NotificationLevel>
                         <prop:NotificationLevel>WarnsOnly</prop:NotificationLevel>
                         <prop:NotificationLevel>ErrorsOnly</prop:NotificationLevel>
+                    </ComboBox>
+                    <Label Style="{StaticResource AttrNameStyle}" Content="Debug: 日志等级" d:Grid.Row="3" Visibility="{Binding DebugVisibility}"/>
+                    <ComboBox Style="{StaticResource AttrValueStyle}" d:Grid.Row="3" Visibility="{Binding DebugVisibility}" SelectionChanged="LogLevelComboBox_SelectionChanged">
+                        <log:LogLevel>Trace</log:LogLevel>
+                        <log:LogLevel>Debug</log:LogLevel>
+                        <log:LogLevel>Information</log:LogLevel>
+                        <log:LogLevel>Warning</log:LogLevel>
+                        <log:LogLevel>Error</log:LogLevel>
+                        <log:LogLevel>Critical</log:LogLevel>
                     </ComboBox>
 
                     <Label Style="{StaticResource AttrNameStyle}" Content="自定义存档正则表达式" d:Grid.Row="4"/>

@@ -118,5 +118,17 @@ namespace SaveSyncApp.Properties {
                 this["RunAfterStart"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("<Default>")]
+        public string InternalLogLevel {
+            get {
+                return ((string)(this["InternalLogLevel"]));
+            }
+            set {
+                this["InternalLogLevel"] = value;
+            }
+        }
     }
 }

@@ -96,6 +96,21 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
             IconSource = new BitmapImage(new Uri("pack://application:,,,/app.ico", UriKind.Absolute)),
             Visibility = System.Windows.Visibility.Visible,
         };
+
+        Settings.Default.PropertyChanged += (sender, e) =>
+        {
+            switch (e.PropertyName)
+            {
+                case "WorkingDirectory":
+                    if (_services != null)
+                    {
+                        _services.Replace(new(typeof(IProfileProvider), DefaultFileProvider()));
+                        _serviceProvider.Dispose();
+                        _serviceProvider = _services.BuildServiceProvider();
+                    }
+                    break;
+            }
+        };
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 

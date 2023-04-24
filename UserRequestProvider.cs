@@ -15,19 +15,36 @@ internal class UserRequestProvider : IUserRequestProvider
         ToastNotificationManagerCompat.OnActivated += OnActivated;
     }
 
-    Dictionary<string, Action<IDictionary<string, object>>> _callbacks = new();
+    Dictionary<string, Action<IDictionary<string, string>>> _callbacks = new();
+    static IDictionary<string, string> ParseArguments(string arguments)
+    {
+        var result = new Dictionary<string, string>();
+
+        var keyValuePairs = arguments.Split(';');
+        foreach (var keyValuePair in keyValuePairs)
+        {
+            var keyValue = keyValuePair.Split('=');
+            if (keyValue.Length == 2)
+            {
+                result[keyValue[0]] = keyValue[1];
+            }
+        }
+
+        return result;
+    }
     void OnActivated(ToastNotificationActivatedEventArgsCompat e)
     {
-        if (e.UserInput.TryGetValue("guid", out var guid) && guid is string guid_str)
+        var result = ParseArguments(e.Argument);
+        if (result.TryGetValue("guid", out var guid))
         {
-            if (_callbacks.Keys.Contains(guid_str))
+            if (_callbacks.Keys.Contains(guid))
             {
-                _callbacks[guid_str](e.UserInput);
-                _callbacks.Remove(guid_str);
+                _callbacks[guid](result);
+                _callbacks.Remove(guid);
             }
         }
     }
-    public void ShowRequest(int id, string message, (string content, string action)[] options, Action<IDictionary<string, object>> callback)
+    public void ShowRequest(int id, string message, (string content, string action)[] options, Action<IDictionary<string, string>> callback)
     {
         var guid = Guid.NewGuid();
         var guid_str = guid.ToString();

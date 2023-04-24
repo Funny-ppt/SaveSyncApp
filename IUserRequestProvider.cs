@@ -5,5 +5,5 @@ namespace SaveSyncApp;
 
 internal interface IUserRequestProvider
 {
-    void ShowRequest(int id, string message, (string content, string action)[] options, Action<IDictionary<string, object>> callback);
+    void ShowRequest(int id, string message, (string content, string action)[] options, Action<IDictionary<string, string>> callback);
 }

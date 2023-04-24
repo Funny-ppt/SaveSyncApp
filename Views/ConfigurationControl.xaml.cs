@@ -1,4 +1,5 @@
-﻿using SaveSyncApp.Properties;
+﻿using Microsoft.Extensions.Logging;
+using SaveSyncApp.Properties;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,6 +46,10 @@ public partial class ConfigurationControl : UserControl
         var lastColumn = 100;
         foreach (UIElement elem in grid.Children)
         {
+            if (elem.Visibility == Visibility.Collapsed)
+            {
+                continue;
+            }
             var col = (int)elem.GetValue(Grid.ColumnProperty);
             var colSpan = (int)elem.GetValue(Grid.ColumnSpanProperty);
             if (col < lastColumn)
@@ -93,6 +98,14 @@ public partial class ConfigurationControl : UserControl
         {
             App.Context.Profile.IgnorePaths.Add(path);
             App.Context.RefreshProfileCache(true);
+        }
+    }
+
+    private void LogLevelComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox comboBox && comboBox.SelectedItem is LogLevel level)
+        {
+            App.Context.LogLevel = level;
         }
     }
 

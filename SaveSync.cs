@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 
 namespace SaveSyncApp;
 
+
 internal class SaveSync : IDisposable
 {
     static readonly ISet<string> IgnoreProcessNames = new HashSet<string> { "explorer" };
@@ -136,7 +137,7 @@ internal class SaveSync : IDisposable
         }
     }
 
-    void RequestUserConfirm(FileChangeMatchEventArgs e, string savePath, Action<IDictionary<string, object>> callback)
+    void RequestUserConfirm(FileChangeMatchEventArgs e, string savePath, Action<IDictionary<string, string>> callback)
     {
         if (_userRequestProvider == null)
         {
@@ -277,18 +278,22 @@ internal class SaveSync : IDisposable
                                 UpdateProfile(saveFolder, args.MatchFriendlyName);
                                 return;
                             case MatchType.FuzzyMatch:
-                                saveFolder = GetSubfolderName(path, e.FullPath);
-                                RequestUserConfirm(args, saveFolder, (e) =>
+                                if (_trackedProcesses.TryAdd(processId, process))
                                 {
-                                    if (e.TryGetValue("action", out var action) && action is string action_str && action_str == "confirm")
+                                    saveFolder = GetSubfolderName(path, e.FullPath);
+                                    RequestUserConfirm(args, saveFolder, (e) =>
                                     {
-                                        UpdateProfile(saveFolder, args.MatchFriendlyName);
-                                    }
-                                    else
-                                    {
-                                        _trackPathProvider.AddIgnorePath(saveFolder);
-                                    }
-                                });
+                                        _trackedProcesses.Remove(processId, out _);
+                                        if (e.TryGetValue("action", out var action) && action == "confirm")
+                                        {
+                                            UpdateProfile(saveFolder, args.MatchFriendlyName);
+                                        }
+                                        else
+                                        {
+                                            _trackPathProvider.AddIgnorePath(saveFolder);
+                                        }
+                                    });
+                                }
                                 break;
                             default:
                                 break;
