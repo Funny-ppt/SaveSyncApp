@@ -16,6 +16,7 @@ namespace SaveSyncApp
     public partial class SavesControl : UserControl
     {
         public SavesViewModel Model { get; }
+        bool _requireSave = false;
 
         public SavesControl()
         {
@@ -32,7 +33,7 @@ namespace SaveSyncApp
                 }
                 else if (mainWindows.LastPage  == this)
                 {
-                    Model.RefreshProfileCache();
+                    Model.RefreshProfileCache(_requireSave);
                 }
             };
         }
@@ -110,6 +111,25 @@ namespace SaveSyncApp
             if (sender is Button button && button.Tag is ProfileItem item)
             {
                 Process.Start("explorer.exe", Path.Combine(Settings.Default.WorkingDirectory, "Saves", Path.GetFileName(item.ReplacedSavePath)));
+            }
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Model.IsSaveSyncActive)
+            {
+                MessageBox.Show("SaveSync在运行时, 禁止删除存档", "SaveSync", MessageBoxButton.OK);
+            }
+            if (sender is Button button && button.Tag is ProfileItem item)
+            {
+                var result = MessageBox.Show($"确认要删除存档 {item.UserFriendlyName} 吗?", "SaveSync", MessageBoxButton.YesNo);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    _requireSave = true;
+                    App.Context.Profile.Items.Remove(item.ProcessName, out _);
+                    Model.RefreshProfileCache(true);
+                }
             }
         }
     }

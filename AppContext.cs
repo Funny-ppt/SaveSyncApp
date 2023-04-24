@@ -30,11 +30,12 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     ServiceProvider? _serviceProvider = null;
     public ServiceProvider ServiceProvider => _serviceProvider ??= RegisterServices();
 
+    FileProfileProvider DefaultFileProvider() => new FileProfileProvider(Path.Combine(Settings.Default.WorkingDirectory, "profile.json"));
     ServiceProvider RegisterServices()
     {
         _services = new ServiceCollection();
         _services.AddTransient<ITrackPathProvider>((services) => new TrackPathProvider());
-        _services.AddSingleton<IProfileProvider>(new FileProfileProvider(Path.Combine(Settings.Default.WorkingDirectory, "profile.json")));
+        _services.AddSingleton<IProfileProvider>(DefaultFileProvider());
         _services.AddSingleton<IProfileVersionManagement>(new ProfileVersionManagement());
         _services.AddSingleton<ILoggerFactory>(LoggerFactory);
         _services.AddSingleton<INotificationProvider>(new NotificationProvider());
@@ -69,7 +70,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
             if (value == _saveSync) return;
             if (_cachedProfile != null)
             {
-                new FileProfileProvider(Settings.Default.WorkingDirectory).TrySaveProfile(_cachedProfile);
+                DefaultFileProvider().TrySaveProfile(_cachedProfile);
                 _cachedProfile = null;
             }
             _saveSync?.Dispose();
@@ -106,7 +107,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     {
         if (save && _cachedProfile != null)
         {
-            new FileProfileProvider(Settings.Default.WorkingDirectory).TrySaveProfile(_cachedProfile);
+            DefaultFileProvider().TrySaveProfile(_cachedProfile);
         }
         _cachedProfile = null;
         PropertyChanged?.Invoke(this, new(nameof(Profile)));

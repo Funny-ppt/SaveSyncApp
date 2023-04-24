@@ -14,9 +14,9 @@ public class SavesViewModel : INotifyPropertyChanged
     {
         PropertyChanged?.Invoke(this, new(nameof(Saves)));
     }
-    public void RefreshProfileCache()
+    public void RefreshProfileCache(bool save)
     {
-        App.Context.RefreshProfileCache();
+        App.Context.RefreshProfileCache(save);
         PropertyChanged?.Invoke(this, new(nameof(Saves)));
     }
 

@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
+using System.Collections.ObjectModel;
 
 namespace SaveSyncApp;
 
@@ -228,10 +229,13 @@ internal class SaveSync : IDisposable
                 {
                     if (_trackedProcesses.TryAdd(processId, process))
                     {
+                        var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
+                        if (!File.Exists(iconPath))
+                        {
+                            ImageExtractor.TrySaveProgramIcon(executablePath, iconPath);
+                        }
                         if (!_profile.Items.ContainsKey(processName)) // 如果对应的进程没有配置信息，则添加相应信息
                         {
-                            var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
-                            ImageExtractor.TrySaveProgramIcon(executablePath, iconPath);
                             _profile[processName] = new ProfileItem()
                             {
                                 ProcessName = processName,
@@ -384,8 +388,8 @@ internal class SaveSync : IDisposable
                 }
                 _trackedProcesses.Clear();
 
-                _profile.TrackPaths = _trackPathProvider.GetPaths().Select(SpecialFolders.ReplacePathsWithPlaceholds).ToList();
-                _profile.IgnorePaths = _trackPathProvider.GetIgnorePaths().Select(SpecialFolders.ReplacePathsWithPlaceholds).ToList();
+                _profile.TrackPaths = new(_trackPathProvider.GetPaths().Select(SpecialFolders.ReplacePathsWithPlaceholds));
+                _profile.IgnorePaths = new(_trackPathProvider.GetIgnorePaths().Select(SpecialFolders.ReplacePathsWithPlaceholds));
                 _profileProvider.TrySaveProfile(_profile);
             }
 
