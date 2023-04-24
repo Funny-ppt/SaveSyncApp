@@ -23,8 +23,18 @@ namespace SaveSyncApp
 
             DataContext = Model = new();
 
-            Loaded += delegate { Model.RefreshProfile(); };
-            Unloaded += delegate { Model.RefreshProfileCache(); };
+            App.Current.MainWindow.PageChanged += (sender, e) =>
+            {
+                var mainWindows = sender as MainWindow;
+                if (mainWindows.ContentPage == this)
+                {
+                    Model.RefreshProfile();
+                }
+                else if (mainWindows.LastPage  == this)
+                {
+                    Model.RefreshProfileCache();
+                }
+            };
         }
 
         private void Label_MouseDown(object sender, MouseButtonEventArgs e)

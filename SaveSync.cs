@@ -231,7 +231,7 @@ internal class SaveSync : IDisposable
                         if (!_profile.Items.ContainsKey(processName)) // 如果对应的进程没有配置信息，则添加相应信息
                         {
                             var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
-                            ImageExtractor.SaveProgramIcon(executablePath, iconPath);
+                            ImageExtractor.TrySaveProgramIcon(executablePath, iconPath);
                             _profile[processName] = new ProfileItem()
                             {
                                 ProcessName = processName,
@@ -241,7 +241,6 @@ internal class SaveSync : IDisposable
                                 RecentChangeDate = DateTime.UtcNow,
                             };
                             _logger?.LogInformation("已将由 {ProcessName} 写入的 {SaveFolder} 加入跟踪列表中", processName, saveFolder);
-
                         }
 
                         Task.Run(() => TraceProcessTask(saveFolder), _cts.Token);

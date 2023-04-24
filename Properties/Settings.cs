@@ -15,7 +15,7 @@ internal sealed partial class Settings {
 
     // 暂时保留原先的值, 但使用空的目录以提示用户设置该目录
     static readonly string DefaultWorkingDirectory =
-        "" ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SaveSync");
+        Path.GetDirectoryName(Environment.ProcessPath) ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SaveSync");
     const string DefaultPlaceholder = "<Default>";
 
     public Settings() {
@@ -37,7 +37,7 @@ internal sealed partial class Settings {
         }
         set
         {
-            InternalWorkingDirectory = value?.Trim() ?? "";
+            InternalWorkingDirectory = value?.Trim() ?? DefaultWorkingDirectory;
             OnPropertyChanged(this, new(nameof(WorkingDirectory)));
         }
     }

@@ -5,8 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:SaveSyncApp"
              xmlns:prop="clr-namespace:SaveSyncApp.Properties"
-             d:DataContext="{d:DesignInstance Type=prop:Settings}"
-    x:Class="SaveSyncApp.ConfigurationControl"
+             x:Class="SaveSyncApp.ConfigurationControl"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
@@ -25,14 +24,14 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Orientation="Vertical" x:Name="Container">
-            <GroupBox x:Name="AppSettingGroup" Header="SaveSyncApp" Margin="4,4,4,2">
+            <GroupBox x:Name="AppSettingGroup" Header="SaveSyncApp" Margin="4,4,4,2" d:DataContext="{d:DesignInstance Type=prop:Settings}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200" />
                         <ColumnDefinition Width="1*" />
                         <ColumnDefinition Width="auto" />
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
+                    <d:Grid.RowDefinitions>
                         <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
@@ -41,7 +40,7 @@
                         <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
-                    </Grid.RowDefinitions>
+                    </d:Grid.RowDefinitions>
 
                     <Label Style="{StaticResource AttrNameStyle}" Content="开机自启动"/>
                     <CheckBox Grid.Column="1" VerticalAlignment="Center" Margin="4"
@@ -50,41 +49,72 @@
                             <ScaleTransform ScaleX="2" ScaleY="2" />
                         </CheckBox.LayoutTransform>
                     </CheckBox>
-                    <Label Style="{StaticResource AttrNameStyle}" Content="启动后自动运行" Grid.Row="1"/>
-                    <CheckBox Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" Margin="4"
+                    <Label Style="{StaticResource AttrNameStyle}" Content="启动后自动运行" d:Grid.Row="1"/>
+                    <CheckBox Grid.Column="1" d:Grid.Row="1" VerticalAlignment="Center" Margin="4"
                               IsChecked="{Binding RunAfterStart, Mode=TwoWay}">
                         <CheckBox.LayoutTransform>
                             <ScaleTransform ScaleX="2" ScaleY="2" />
                         </CheckBox.LayoutTransform>
                     </CheckBox>
-                    <Label Style="{StaticResource AttrNameStyle}" Content="同步目录" Grid.Row="2"/>
-                    <TextBox Style="{StaticResource AttrValueStyle}" Grid.Row="2" Text="{Binding WorkingDirectory, Mode=TwoWay}" />
-                    <Button Grid.Row="2" Grid.Column="2" Content="选择目录" Padding="10,0" Margin="4" Click="SelectDirectoryButton_Click" />
-                    <Label Style="{StaticResource AttrNameStyle}" Content="提醒等级" Grid.Row="3"/>
-                    <ComboBox Style="{StaticResource AttrValueStyle}" Grid.Row="3" SelectedItem="{Binding NotificationLevel, Mode=TwoWay}">
+                    <Label Style="{StaticResource AttrNameStyle}" Content="同步目录" d:Grid.Row="2"/>
+                    <TextBox x:Name="WorkingDirectoryTextBox" Style="{StaticResource AttrValueStyle}" d:Grid.Row="2" Text="{Binding WorkingDirectory, Mode=TwoWay}" />
+                    <Button d:Grid.Row="2" Grid.Column="2" Content="选择目录" Padding="10,0" Margin="4"
+                            Click="SelectDirectoryButton_Click" Tag="{Binding ElementName=WorkingDirectoryTextBox}" />
+                    <Label Style="{StaticResource AttrNameStyle}" Content="提醒等级" d:Grid.Row="3"/>
+                    <ComboBox Style="{StaticResource AttrValueStyle}" d:Grid.Row="3" SelectedItem="{Binding NotificationLevel, Mode=TwoWay}">
                         <prop:NotificationLevel>Normal</prop:NotificationLevel>
                         <prop:NotificationLevel>WarnsOnly</prop:NotificationLevel>
                         <prop:NotificationLevel>ErrorsOnly</prop:NotificationLevel>
                     </ComboBox>
 
-                    <Label Style="{StaticResource AttrNameStyle}" Content="自定义存档正则表达式" Grid.Row="4"/>
-                    <TextBox Style="{StaticResource AttrValueStyle}" Grid.Row="4" Text="{Binding SaveFilePattern, Mode=TwoWay}" />
-                    <CheckBox Grid.Row="4"  Grid.Column="2" VerticalAlignment="Center" Margin="4"
+                    <Label Style="{StaticResource AttrNameStyle}" Content="自定义存档正则表达式" d:Grid.Row="4"/>
+                    <TextBox Style="{StaticResource AttrValueStyle}" d:Grid.Row="4" Text="{Binding SaveFilePattern, Mode=TwoWay}" />
+                    <CheckBox d:Grid.Row="4"  Grid.Column="2" VerticalAlignment="Center" Margin="4"
                               IsChecked="{Binding SaveFileMatchEnabled, Mode=TwoWay}">
                         <CheckBox.LayoutTransform>
                             <ScaleTransform ScaleX="2" ScaleY="2" />
                         </CheckBox.LayoutTransform>
                     </CheckBox>
-                    <Label Style="{StaticResource AttrNameStyle}" Content="日文匹配规则" Grid.Row="5"/>
-                    <CheckBox Grid.Row="5"  Grid.Column="1" VerticalAlignment="Center" Margin="4"
+                    <Label Style="{StaticResource AttrNameStyle}" Content="日文匹配规则" d:Grid.Row="5"/>
+                    <CheckBox d:Grid.Row="5"  Grid.Column="1" VerticalAlignment="Center" Margin="4"
                               IsChecked="{Binding JapaneseMatchRuleEnabled, Mode=TwoWay}">
                         <CheckBox.LayoutTransform>
                             <ScaleTransform ScaleX="2" ScaleY="2" />
                         </CheckBox.LayoutTransform>
                     </CheckBox>
                     <Label Style="{StaticResource AttrNameStyle}"
-                           Content="以上更改后，需要重新启动SaveSync才能生效" Grid.Row="6" Grid.ColumnSpan="2"/>
-                    <Button Grid.Row="6" Grid.Column="2" Content="重启" Padding="10,0" Margin="4" Click="RestartSaveSyncButton_Click" />
+                           Content="以上更改后，需要重新启动SaveSync才能生效" d:Grid.Row="6" Grid.ColumnSpan="2"/>
+                    <Button d:Grid.Row="6" Grid.Column="2" Content="重启" Padding="10,0" Margin="4" Click="RestartSaveSyncButton_Click" />
+                </Grid>
+            </GroupBox>
+
+            <GroupBox x:Name="ProfileSettingGroup" Header="Profile" Margin="4,4,4,2" d:DataContext="{d:DesignInstance Type=local:Profile}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="auto" />
+                    </Grid.ColumnDefinitions>
+                    <d:Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </d:Grid.RowDefinitions>
+
+                    <ListBox Grid.ColumnSpan="4" ItemsSource="{Binding TrackPaths}"/>
+                    <Label Style="{StaticResource AttrNameStyle}" Content="新增跟踪目录" d:Grid.Row="1"/>
+                    <TextBox x:Name="NewTrackPathTextBox" Style="{StaticResource AttrValueStyle}" d:Grid.Row="1" />
+                    <Button d:Grid.Row="1" Grid.Column="2" Content="选择目录" Padding="10,0" Margin="4"
+                            Tag="{Binding ElementName=NewTrackPathTextBox}" Click="SelectDirectoryButton_Click" />
+                    <Button d:Grid.Row="1" Grid.Column="3" Content="确认添加" Padding="10,0" Margin="4" Click="AddTrackPathButton_Click" />
+                    
+                    <ListBox Grid.ColumnSpan="4" ItemsSource="{Binding IgnorePaths}" />
+                    <Label Style="{StaticResource AttrNameStyle}" Content="新增忽略目录" d:Grid.Row="2"/>
+                    <TextBox x:Name="NewIgnorePathTextBox" Style="{StaticResource AttrValueStyle}" d:Grid.Row="2" />
+                    <Button d:Grid.Row="2" Grid.Column="2" Content="选择目录" Padding="10,0" Margin="4"
+                            Tag="{Binding ElementName=NewIgnorePathTextBox}" Click="SelectDirectoryButton_Click" />
+                    <Button d:Grid.Row="2" Grid.Column="3" Content="确认添加" Padding="10,0" Margin="4" Click="AddIgnorePathButton_Click" />
                 </Grid>
             </GroupBox>
         </StackPanel>

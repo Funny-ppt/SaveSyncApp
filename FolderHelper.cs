@@ -77,7 +77,14 @@ namespace SaveSyncApp
         public static void CopyOrOverwriteFolder(string sourceFolder, string destFolder, Action<FileSystemOperationPreview>? onOverwrite = null)
          => CopyOrOverwriteFolderImpl(sourceFolder, destFolder, onOverwrite ?? OverwriteDefaultHandler, null);
 
-        // todo: reportProgress未实现
+        /// <summary>
+        /// 将源目录（含目录）拷贝到目标目录下
+        /// </summary>
+        /// <param name="sourceFolder">源目录</param>
+        /// <param name="destFolder">目标目录</param>
+        /// <param name="onOverwrite">当需要覆盖时，调用该函数以确认覆盖结果</param>
+        /// <param name="reportProgress">回报进度函数（未实现）</param>
+        /// <exception cref="ArgumentException">如果sourceFolder不存在，就会触发该异常</exception>
         static void CopyOrOverwriteFolderImpl(string sourceFolder, string destFolder, Action<FileSystemOperationPreview>? onOverwrite, Action<int, int>? reportProgress)
         {
             if (!Directory.Exists(sourceFolder))
@@ -128,7 +135,7 @@ namespace SaveSyncApp
                 string subfolderName = Path.GetFileName(sourceSubfolder);
                 string destSubfolder = Path.Combine(destFolder, subfolderName);
 
-                CopyOrOverwriteFolderImpl(sourceSubfolder, destSubfolder, onOverwrite, reportProgress);
+                CopyOrOverwriteFolderImpl(sourceSubfolder, destFolder, onOverwrite, reportProgress);
             }
 
             if (destFolderExists)

@@ -75,6 +75,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
             _saveSync?.Dispose();
             _saveSync = value;
             PropertyChanged?.Invoke(this, new(nameof(SaveSync)));
+            PropertyChanged?.Invoke(this, new(nameof(Profile)));
         }
     }
 
@@ -101,9 +102,14 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     /// <summary>
     /// 该调用会取消所有未保存的更改
     /// </summary>
-    public void RefreshProfileCache()
+    public void RefreshProfileCache(bool save = false)
     {
+        if (save && _cachedProfile != null)
+        {
+            new FileProfileProvider(Settings.Default.WorkingDirectory).TrySaveProfile(_cachedProfile);
+        }
         _cachedProfile = null;
+        PropertyChanged?.Invoke(this, new(nameof(Profile)));
     }
 
     static readonly Regex JapaneseRegex = new(@"[\u0800-\u4e00]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
