@@ -3,6 +3,7 @@
 public enum FileSystemAction
 {
     Overwrite,
+    OverwriteAll,
     Skip,
     Cancel,
 }

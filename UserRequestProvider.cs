@@ -49,6 +49,6 @@ internal class UserRequestProvider : IUserRequestProvider
         var guid = Guid.NewGuid();
         var guid_str = guid.ToString();
         _callbacks[guid_str] = callback;
-        NotificationHelper.ShowNotification(id, message, true, options, new[] { ("guid", guid_str) });
+        NotificationHelper.ShowNotification(id, message, true, ToastScenario.Alarm, options, new[] { ("guid", guid_str) });
     }
 }

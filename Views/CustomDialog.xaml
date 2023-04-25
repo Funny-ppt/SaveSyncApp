@@ -5,7 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SaveSyncApp"
         mc:Ignorable="d"
-        WindowStartupLocation="CenterOwner"
         WindowStyle="SingleBorderWindow"
         ResizeMode="NoResize" SizeToContent="WidthAndHeight" MinWidth="240" MaxWidth="720"
         Title="{Binding Title}"

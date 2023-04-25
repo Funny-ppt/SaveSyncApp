@@ -10,11 +10,7 @@ using System.Windows;
 
 namespace SaveSyncApp;
 
-
-// todo: 删除文件增加一键确认所有
-
-
-public static class FolderHelper
+internal static class FolderHelper
 {
     static void CopyOrOverwriteFolderOnBackground(BackgroundWorker worker, string sourceFolder, string destFolder, Action<FileSystemOperationPreview>? onOverwrite = null)
     {
@@ -31,16 +27,9 @@ public static class FolderHelper
         {
             var message = $"将删除该文文件(夹):\n" +
                           $"{e.DestinationInfo}";
-            var result = MessageBox.Show(message, "删除文件确认", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            switch (result)
-            {
-                case MessageBoxResult.Yes:
-                    e.Action = FileSystemAction.Overwrite;
-                    break;
-                case MessageBoxResult.No:
-                    e.Action = FileSystemAction.Skip;
-                    break;
-            }
+
+            var result = CustomDialog.ShowDialog("SaveSync", message, new[] { ("删除所有", "OverwriteAll"), ("确认", "Overwrite"), ("跳过", "Skip"), ("取消", "Cancel") }, "Skip");
+            e.Action = Enum.Parse<FileSystemAction>(result["action"]);
             return;
         }
 
@@ -62,19 +51,8 @@ public static class FolderHelper
                           $"目标文件修改时间：{destLWT}\n\n" +
                           $"是否要覆盖目标文件？";
 
-            var result = MessageBox.Show(message, "覆盖文件确认", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
-            switch (result)
-            {
-                case MessageBoxResult.Yes:
-                    e.Action = FileSystemAction.Overwrite;
-                    break;
-                case MessageBoxResult.No:
-                    e.Action = FileSystemAction.Skip;
-                    break;
-                case MessageBoxResult.Cancel:
-                    e.Action = FileSystemAction.Cancel;
-                    break;
-            }
+            var result = CustomDialog.ShowDialog("SaveSync", message, new[] { ("覆盖所有", "OverwriteAll"), ("确认", "Overwrite"), ("跳过", "Skip"), ("取消", "Cancel") }, "Cancel");
+            e.Action = Enum.Parse<FileSystemAction>(result["action"]);
         }
     }
 
@@ -103,6 +81,7 @@ public static class FolderHelper
         }
 
         // 从源目录复制文件
+        var skipConfirm = false;
         var sourceFiles = Directory.GetFiles(sourceFolder);
         for (int i = 0; i < sourceFiles.Length; i++)
         {
@@ -117,13 +96,26 @@ public static class FolderHelper
                 var sourceInfo = new FileInfo(sourceFile);
                 var destInfo = new FileInfo(destFile);
 
+                if (skipConfirm)
+                {
+                    File.Copy(sourceFile, destFile, true);
+                    continue;
+                }
+
                 var preview = new FileSystemOperationPreview(sourceInfo, destInfo);
                 onOverwrite?.Invoke(preview);
 
-                if (preview.Action == FileSystemAction.Cancel) return;
-                if (preview.Action == FileSystemAction.Overwrite)
+                switch (preview.Action)
                 {
-                    File.Copy(sourceFile, destFile, true);
+                    case FileSystemAction.Overwrite:
+                        File.Copy(sourceFile, destFile, true);
+                        break;
+                    case FileSystemAction.OverwriteAll:
+                        File.Copy(sourceFile, destFile, true);
+                        skipConfirm = true;
+                        break;
+                    case FileSystemAction.Cancel:
+                        return;
                 }
             }
             else
@@ -145,6 +137,7 @@ public static class FolderHelper
         if (destFolderExists)
         {
             // 删除目标目录中不存在于源目录中的文件
+            skipConfirm = false;
             string[] destFiles = Directory.GetFiles(destFolder);
             foreach (string destFile in destFiles)
             {
@@ -153,13 +146,26 @@ public static class FolderHelper
 
                 if (!File.Exists(sourceFile))
                 {
+                    if (skipConfirm)
+                    {
+                        File.Delete(destFile);
+                        continue;
+                    }
+
                     var preview = new FileSystemOperationPreview(null, new FileInfo(destFile));
                     onOverwrite?.Invoke(preview);
 
-                    if (preview.Action == FileSystemAction.Cancel) return;
-                    if (preview.Action == FileSystemAction.Overwrite)
+                    switch (preview.Action)
                     {
-                        File.Delete(destFile);
+                        case FileSystemAction.Overwrite:
+                            File.Delete(destFile);
+                            break;
+                        case FileSystemAction.OverwriteAll:
+                            File.Delete(destFile);
+                            skipConfirm = true;
+                            break;
+                        case FileSystemAction.Cancel:
+                            return;
                     }
                 }
             }
@@ -173,13 +179,26 @@ public static class FolderHelper
 
                 if (!Directory.Exists(sourceSubfolder))
                 {
+                    if (skipConfirm)
+                    {
+                        Directory.Delete(destSubfolder, true);
+                        continue;
+                    }
+
                     var preview = new FileSystemOperationPreview(null, new DirectoryInfo(destSubfolder));
                     onOverwrite?.Invoke(preview);
 
-                    if (preview.Action == FileSystemAction.Cancel) return;
-                    if (preview.Action == FileSystemAction.Overwrite)
+                    switch (preview.Action)
                     {
-                        Directory.Delete(destSubfolder, true);
+                        case FileSystemAction.Overwrite:
+                            Directory.Delete(destSubfolder, true);
+                            break;
+                        case FileSystemAction.OverwriteAll:
+                            Directory.Delete(destSubfolder, true);
+                            skipConfirm = true;
+                            break;
+                        case FileSystemAction.Cancel:
+                            return;
                     }
                 }
             }

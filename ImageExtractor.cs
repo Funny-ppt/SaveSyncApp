@@ -44,7 +44,10 @@ public static class ImageExtractor
 
     public static void SaveProgramIcon(string filePath, string iconPath)
     {
-        using var icon = GetIcon(GetIconIndex(filePath), IMAGELIST_SIZE_FLAG.SHIL_EXTRALARGE) ?? throw new InvalidOperationException("fail to extract icon");
+        var iconIndex = GetIconIndex(filePath);
+        using var icon = GetIcon(iconIndex, IMAGELIST_SIZE_FLAG.SHIL_JUMBO)
+            ?? GetIcon(iconIndex, IMAGELIST_SIZE_FLAG.SHIL_SMALL)
+            ?? throw new InvalidOperationException("fail to extract icon");
         using var bitmap = icon.ToBitmap();
         bitmap.Save(iconPath);
     }

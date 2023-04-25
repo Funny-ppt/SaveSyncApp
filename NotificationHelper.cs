@@ -4,10 +4,10 @@ using System;
 
 namespace SaveSyncApp;
 
-public static class NotificationHelper
+internal static class NotificationHelper
 {
-    public static void ShowNotification(int id, string message, bool important = false) => ShowNotification(id, message, important, new[] { ("确认", "confirm") }, Array.Empty<(string, string)>());
-    public static void ShowNotification(int id, string message, bool important, (string content, string action)[] buttons, (string key, string value)[] args)
+    public static void ShowNotification(int id, string message, bool important = false) => ShowNotification(id, message, important, null, new[] { ("确认", "confirm") }, Array.Empty<(string, string)>());
+    public static void ShowNotification(int id, string message, bool important, ToastScenario? scenario, (string content, string action)[] buttons, (string key, string value)[] args)
     {
         if (id < (int)Settings.Default.NotificationLevel * 1000 && !important)
         {
@@ -15,8 +15,7 @@ public static class NotificationHelper
         }
 
         var builder = new ToastContentBuilder()
-            .SetToastScenario(important ? ToastScenario.Reminder : ToastScenario.Default)
-            .SetToastDuration(ToastDuration.Short)
+            .SetToastScenario(scenario ?? ToastScenario.Default)
             .AddArgument("id", id)
             .AddText(message);
         foreach (var (key, value) in args)

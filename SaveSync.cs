@@ -11,7 +11,6 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
-using System.Collections.ObjectModel;
 
 namespace SaveSyncApp;
 
@@ -171,7 +170,6 @@ internal class SaveSync : IDisposable
 
         void OnChanged(object sender, FileSystemEventArgs e) // 假定每个应用只有一个配置文件夹
         {
-            _logger?.LogTrace("检测到写入文件{FullPath}, {ChangeType}", e.FullPath, e.ChangeType);
             foreach (var path in _trackPathProvider.GetIgnorePaths())
             {
                 if (IsSubdirectory(path, e.FullPath))
@@ -179,6 +177,7 @@ internal class SaveSync : IDisposable
                     return;
                 }
             }
+            _logger?.LogTrace("检测到写入文件{FullPath}, {ChangeType}", e.FullPath, e.ChangeType);
 
             var hWnd = GetForegroundWindow();
             var hResult = GetWindowThreadProcessId(hWnd, out var processId);
@@ -214,7 +213,12 @@ internal class SaveSync : IDisposable
             {
                 if (_trackedProcesses.TryAdd(processId, process))
                 {
-                    Task.Run(() => TraceProcessTask(_profile[processName].SavePath), _cts.Token);
+                    var iconPath = _profile.Items[processName].IconPath;
+                    if (!File.Exists(iconPath))
+                    {
+                        ImageExtractor.TrySaveProgramIcon(process.MainModule.FileName, iconPath);
+                    }
+                    Task.Run(() => TraceProcessTask(_profile[processName].ReplacedSavePath), _cts.Token);
                 }
                 return;
             }
@@ -231,10 +235,7 @@ internal class SaveSync : IDisposable
                     if (_trackedProcesses.TryAdd(processId, process))
                     {
                         var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
-                        if (!File.Exists(iconPath))
-                        {
-                            ImageExtractor.TrySaveProgramIcon(executablePath, iconPath);
-                        }
+                        ImageExtractor.TrySaveProgramIcon(executablePath, iconPath);
                         if (!_profile.Items.ContainsKey(processName)) // 如果对应的进程没有配置信息，则添加相应信息
                         {
                             _profile[processName] = new ProfileItem()

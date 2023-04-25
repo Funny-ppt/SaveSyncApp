@@ -1,8 +1,10 @@
 ﻿using SaveSyncApp.Properties;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -63,7 +65,7 @@ public partial class SavesControl : UserControl
         });
     }
 
-    private void SyncButton_Click(object sender, RoutedEventArgs e)
+    private void LoadSyncSaveButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button button && button.Tag is ProfileItem item)
         {
@@ -109,7 +111,9 @@ public partial class SavesControl : UserControl
     {
         if (sender is Button button && button.Tag is ProfileItem item)
         {
-            Process.Start("explorer.exe", item.GetSyncSaveFolder());
+            var syncSaveFolder = item.GetSyncSaveFolder();
+            var exists = Directory.Exists(syncSaveFolder);
+            Process.Start("explorer.exe", exists ? syncSaveFolder : Path.Combine(Settings.Default.WorkingDirectory, "Saves"));
         }
     }
 
@@ -118,6 +122,7 @@ public partial class SavesControl : UserControl
         if (Model.IsSaveSyncActive)
         {
             MessageBox.Show("SaveSync在运行时, 禁止删除存档", "SaveSync", MessageBoxButton.OK);
+            return;
         }
         if (sender is Button button && button.Tag is ProfileItem item)
         {
@@ -130,6 +135,16 @@ public partial class SavesControl : UserControl
                 App.Context.Profile.Items.Remove(item.ProcessName, out _);
                 Model.RefreshProfileCache(true);
             }
+        }
+    }
+
+    private void SyncLocalSaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is ProfileItem item)
+        {
+            FolderHelper.CopyOrOverwriteFolder(item.ReplacedSavePath, Path.Combine(Settings.Default.WorkingDirectory, "Saves"));
+            item.RecentChangeDate = DateTime.UtcNow;
+            App.Current.ShowNotification(AppNotificationId.NotifySyncSuccess, $"{item.UserFriendlyName} 的存档已经备份完成");
         }
     }
 }
