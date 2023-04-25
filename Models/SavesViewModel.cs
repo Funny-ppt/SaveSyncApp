@@ -1,21 +1,23 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 namespace SaveSyncApp;
 
 public class SavesViewModel : INotifyPropertyChanged
 {
     public bool IsSaveSyncActive => App.Context.SaveSync != null;
-    public Profile Profile => App.Context.Profile;
+    public IEnumerable<ProfileItem> Saves => App.Context.Profile.Items.Values.OrderByDescending(i => i.RecentChangeDate);
 
     public void RefreshProfile()
     {
-        PropertyChanged?.Invoke(this, new(nameof(Profile)));
+        PropertyChanged?.Invoke(this, new(nameof(Saves)));
     }
     public void RefreshProfileCache()
     {
         App.Context.RefreshProfileCache();
-        PropertyChanged?.Invoke(this, new(nameof(Profile)));
+        PropertyChanged?.Invoke(this, new(nameof(Saves)));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -30,7 +32,7 @@ public class SavesViewModel : INotifyPropertyChanged
                     PropertyChanged?.Invoke(this, new(nameof(IsSaveSyncActive)));
                     break;
                 case "Profile":
-                    PropertyChanged?.Invoke(this, new(nameof(Profile)));
+                    PropertyChanged?.Invoke(this, new(nameof(Saves)));
                     break;
             }
         };

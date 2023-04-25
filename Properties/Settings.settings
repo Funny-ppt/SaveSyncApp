@@ -26,5 +26,8 @@
     <Setting Name="RunAfterStart" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="InternalLogLevel" Type="System.String" Scope="User">
+      <Value Profile="(Default)">&lt;Default&gt;</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

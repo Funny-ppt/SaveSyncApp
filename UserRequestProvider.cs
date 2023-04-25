@@ -9,37 +9,9 @@ namespace SaveSyncApp;
 
 internal class UserRequestProvider : IUserRequestProvider
 {
-    public void ShowRequest(int id, string message, (string content, string action)[] options, Action<IDictionary<string, object>> callback)
+    public async void ShowRequest(int id, string message, (string content, string action)[] options, Action<IDictionary<string, string>> callback)
     {
-        var dispalyMessage = $"{message}\n\n";
-        dispalyMessage = options.Length switch
-        {
-            <= 1 => dispalyMessage,
-            2 => dispalyMessage +
-                 $"是|Yes={options[0].content}\n" +
-                 $"否|No={options[1].content}",
-            3 => dispalyMessage +
-                 $"是|Yes={options[0].content}\n" +
-                 $"否|No={options[1].content}\n" +
-                 $"取消|Cancel={options[2].content}",
-            _ => throw new ArgumentException(null, nameof(options))
-        };
-        var buttons = options.Length switch
-        {
-            <= 1 => MessageBoxButton.OK,
-            2 => MessageBoxButton.YesNo,
-            3 => MessageBoxButton.YesNoCancel,
-            _ => throw new ArgumentException(null, nameof(options)) // never reaches
-        };
-        var result = MessageBox.Show(message, "SaveSync", buttons);
-        var action = result switch
-        {
-            MessageBoxResult.None => options.Length == 1 ? options[0].action : "",
-            MessageBoxResult.OK => options.Length == 1 ? options[0].action : "",
-            MessageBoxResult.Yes => options[1].action,
-            MessageBoxResult.No => options[2].action,
-            MessageBoxResult.Cancel => options[3].action,
-        };
-        callback(new Dictionary<string, object> { { "id", id }, { "action", action } });
+        var result = await Task.Run(() => CustomDialog.ShowDialog("SaveSync", message, options, "confirm"));
+        callback(result as Dictionary<string, string>); // 这是一个设计失误，不过不影响类型安全所以就这样吧
     }
 }

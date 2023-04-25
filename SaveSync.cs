@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 
 namespace SaveSyncApp;
 
+
 internal class SaveSync : IDisposable
 {
     static readonly ISet<string> IgnoreProcessNames = new HashSet<string> { "explorer" };
@@ -135,7 +136,7 @@ internal class SaveSync : IDisposable
         }
     }
 
-    void RequestUserConfirm(FileChangeMatchEventArgs e, string savePath, Action<IDictionary<string, object>> callback)
+    void RequestUserConfirm(FileChangeMatchEventArgs e, string savePath, Action<IDictionary<string, string>> callback)
     {
         if (_userRequestProvider == null)
         {
@@ -169,7 +170,6 @@ internal class SaveSync : IDisposable
 
         void OnChanged(object sender, FileSystemEventArgs e) // 假定每个应用只有一个配置文件夹
         {
-            _logger?.LogTrace("检测到写入文件{FullPath}, {ChangeType}", e.FullPath, e.ChangeType);
             foreach (var path in _trackPathProvider.GetIgnorePaths())
             {
                 if (IsSubdirectory(path, e.FullPath))
@@ -177,6 +177,7 @@ internal class SaveSync : IDisposable
                     return;
                 }
             }
+            _logger?.LogTrace("检测到写入文件{FullPath}, {ChangeType}", e.FullPath, e.ChangeType);
 
             var hWnd = GetForegroundWindow();
             var hResult = GetWindowThreadProcessId(hWnd, out var processId);
@@ -212,7 +213,12 @@ internal class SaveSync : IDisposable
             {
                 if (_trackedProcesses.TryAdd(processId, process))
                 {
-                    Task.Run(() => TraceProcessTask(_profile[processName].SavePath), _cts.Token);
+                    var iconPath = _profile.Items[processName].IconPath;
+                    if (!File.Exists(iconPath))
+                    {
+                        ImageExtractor.TrySaveProgramIcon(process.MainModule.FileName, iconPath);
+                    }
+                    Task.Run(() => TraceProcessTask(_profile[processName].ReplacedSavePath), _cts.Token);
                 }
                 return;
             }
@@ -228,10 +234,10 @@ internal class SaveSync : IDisposable
                 {
                     if (_trackedProcesses.TryAdd(processId, process))
                     {
+                        var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
+                        ImageExtractor.TrySaveProgramIcon(executablePath, iconPath);
                         if (!_profile.Items.ContainsKey(processName)) // 如果对应的进程没有配置信息，则添加相应信息
                         {
-                            var iconPath = Path.Combine(_savesDirectory, "SaveSyncCache", $"{processName}.ico");
-                            ImageExtractor.SaveProgramIcon(executablePath, iconPath);
                             _profile[processName] = new ProfileItem()
                             {
                                 ProcessName = processName,
@@ -241,7 +247,6 @@ internal class SaveSync : IDisposable
                                 RecentChangeDate = DateTime.UtcNow,
                             };
                             _logger?.LogInformation("已将由 {ProcessName} 写入的 {SaveFolder} 加入跟踪列表中", processName, saveFolder);
-
                         }
 
                         Task.Run(() => TraceProcessTask(saveFolder), _cts.Token);
@@ -274,18 +279,22 @@ internal class SaveSync : IDisposable
                                 UpdateProfile(saveFolder, args.MatchFriendlyName);
                                 return;
                             case MatchType.FuzzyMatch:
-                                saveFolder = GetSubfolderName(path, e.FullPath);
-                                RequestUserConfirm(args, saveFolder, (e) =>
+                                if (_trackedProcesses.TryAdd(processId, process))
                                 {
-                                    if (e.TryGetValue("action", out var action) && action is string action_str && action_str == "confirm")
+                                    saveFolder = GetSubfolderName(path, e.FullPath);
+                                    RequestUserConfirm(args, saveFolder, (e) =>
                                     {
-                                        UpdateProfile(saveFolder, args.MatchFriendlyName);
-                                    }
-                                    else
-                                    {
-                                        _trackPathProvider.AddIgnorePath(saveFolder);
-                                    }
-                                });
+                                        _trackedProcesses.Remove(processId, out _);
+                                        if (e.TryGetValue("action", out var action) && action == "confirm")
+                                        {
+                                            UpdateProfile(saveFolder, args.MatchFriendlyName);
+                                        }
+                                        else
+                                        {
+                                            _trackPathProvider.AddIgnorePath(saveFolder);
+                                        }
+                                    });
+                                }
                                 break;
                             default:
                                 break;
@@ -385,8 +394,8 @@ internal class SaveSync : IDisposable
                 }
                 _trackedProcesses.Clear();
 
-                _profile.TrackPaths = _trackPathProvider.GetPaths().Select(SpecialFolders.ReplacePathsWithPlaceholds).ToList();
-                _profile.IgnorePaths = _trackPathProvider.GetIgnorePaths().Select(SpecialFolders.ReplacePathsWithPlaceholds).ToList();
+                _profile.TrackPaths = new(_trackPathProvider.GetPaths().Select(SpecialFolders.ReplacePathsWithPlaceholds));
+                _profile.IgnorePaths = new(_trackPathProvider.GetIgnorePaths().Select(SpecialFolders.ReplacePathsWithPlaceholds));
                 _profileProvider.TrySaveProfile(_profile);
             }
 

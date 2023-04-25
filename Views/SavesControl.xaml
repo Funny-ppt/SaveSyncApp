@@ -39,7 +39,7 @@
         <ProgressBar Grid.Column="1" Margin="3,5,5,0" />
 
         <ScrollViewer Margin="5" Grid.Row="1" Grid.ColumnSpan="2">
-            <ListBox ItemsSource="{Binding Path=Profile.Items.Values}" HorizontalContentAlignment="Stretch">
+            <ListBox ItemsSource="{Binding Path=Saves}" HorizontalContentAlignment="Stretch">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border>
@@ -66,9 +66,20 @@
                                 <Label Grid.Column="1" Grid.Row="2" Margin="3" Content="存档位置" />
                                 <Label Grid.Column="2" Grid.Row="2" Content="{Binding SavePath}" Style="{StaticResource PropertyDisplayLabelStyle}" />
 
-                                <Button Grid.Column="0" Grid.Row="3" Margin="3" FontSize="16" Content="查看本地存档" Click="CheckLocalSaveButton_Click" Tag="{Binding}" />
-                                <Button Grid.Column="1" Grid.Row="3" Margin="3" FontSize="16" Content="查看同步存档" Click="CheckSyncSaveButton_Click" Tag="{Binding}" />
-                                <Button Grid.Column="2" Grid.Row="3" Margin="3" FontSize="16" Content="同步存档" Click="SyncButton_Click" Tag="{Binding}" />
+                                <Grid Grid.Row="3" Grid.ColumnSpan="3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                        <ColumnDefinition Width="1*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Margin="3" FontSize="16" Content="查看本地存档" Click="CheckLocalSaveButton_Click" Tag="{Binding}" />
+                                    <Button Grid.Column="1" Margin="3" FontSize="16" Content="查看同步存档" Click="CheckSyncSaveButton_Click" Tag="{Binding}" />
+                                    <Button Grid.Column="2" Margin="3" FontSize="16" Content="保存本地存档" Click="SyncLocalSaveButton_Click" Tag="{Binding}" />
+                                    <Button Grid.Column="3" Margin="3" FontSize="16" Content="加载同步存档" Click="LoadSyncSaveButton_Click" Tag="{Binding}" />
+                                    <Button Grid.Column="4" Margin="3" FontSize="16" Content="删除同步存档" Click="DeleteButton_Click" Tag="{Binding}" />
+                                </Grid>
                             </Grid>
                         </Border>
                     </DataTemplate>

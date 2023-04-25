@@ -46,7 +46,7 @@ public class FileProfileProvider : IProfileProvider
         try
         {
             var dir = Path.GetDirectoryName(_path);
-            if (!Directory.Exists(dir))
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
             }

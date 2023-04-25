@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System;
 
 namespace SaveSyncApp;
 
@@ -15,7 +16,7 @@ public static class AutorunHelper
             }
             if (enable)
             {
-                string processPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string processPath = Environment.ProcessPath ?? throw new InvalidOperationException();
                 string commandLine = arguments == null ? processPath : $"\"{processPath}\" {arguments}";
                 registryKey.SetValue(key, commandLine);
             }
@@ -38,7 +39,7 @@ public static class AutorunHelper
             {
                 return false;
             }
-            string processPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string processPath = Environment.ProcessPath ?? throw new InvalidOperationException();
             var value = registryKey.GetValue(key);
             enabled = value != null && ((string)value).Contains(processPath);
             return true;
