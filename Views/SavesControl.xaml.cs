@@ -18,7 +18,6 @@ namespace SaveSyncApp;
 public partial class SavesControl : UserControl
 {
     public SavesViewModel Model { get; }
-    bool _requireSave = false;
 
     public SavesControl()
     {
@@ -32,10 +31,6 @@ public partial class SavesControl : UserControl
             if (mainWindows.ContentPage == this)
             {
                 Model.RefreshProfile();
-            }
-            else if (mainWindows.LastPage  == this)
-            {
-                Model.RefreshProfileCache(_requireSave);
             }
         };
     }
@@ -130,10 +125,9 @@ public partial class SavesControl : UserControl
 
             if (result == MessageBoxResult.Yes)
             {
-                _requireSave = true;
                 Directory.Delete(item.GetSyncSaveFolder(), true);
                 App.Context.Profile.Items.Remove(item.ProcessName, out _);
-                Model.RefreshProfileCache(true);
+                Model.RefreshProfileCache();
             }
         }
     }

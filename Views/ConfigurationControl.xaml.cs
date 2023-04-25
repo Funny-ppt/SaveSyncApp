@@ -24,16 +24,20 @@ public partial class ConfigurationControl : UserControl
         SetComponentRows(AppSettingGroup.Content as Grid);
         SetComponentRows(ProfileSettingGroup.Content as Grid);
 
+        App.Context.PropertyChanged += (sender, e) =>
+        {
+            if (App.Current.MainWindow.ContentPage == this && e.PropertyName == "Profile")
+            {
+                TrackPathsListBox.ItemsSource = App.Context.Profile.TrackPaths;
+                IgnorePathsListBox.ItemsSource = App.Context.Profile.IgnorePaths;
+            }
+        };
         App.Current.MainWindow.PageChanged += (sender, e) =>
         {
             var mainWindows = sender as MainWindow;
-            if (mainWindows.ContentPage == this)
+            if (mainWindows.LastPage == this)
             {
-                ProfileSettingGroup.DataContext = App.Context.Profile;
-            }
-            else if (mainWindows.LastPage == this)
-            {
-                App.Context.RefreshProfileCache(true);
+                App.Context.RefreshProfileCache();
             }
             SetComponentRows(ProfileSettingGroup.Content as Grid);
         };
@@ -64,14 +68,16 @@ public partial class ConfigurationControl : UserControl
 
     private void SelectDirectoryButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button button && button.Tag is TextBox box)
+        if (sender is Button button && button.Tag is TextBox textbox)
         {
             using var folderPicker = new System.Windows.Forms.FolderBrowserDialog();
             var result = folderPicker.ShowDialog();
 
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                box.Text = folderPicker.SelectedPath;
+                textbox.SetCurrentValue(TextBox.TextProperty, folderPicker.SelectedPath);
+                var binding = textbox.GetBindingExpression(TextBox.TextProperty);
+                binding?.UpdateSource();
             }
         }
     }
@@ -86,8 +92,10 @@ public partial class ConfigurationControl : UserControl
         var path = NewTrackPathTextBox.Text;
         if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
         {
-            App.Context.Profile.TrackPaths.Add(path);
-            App.Context.RefreshProfileCache(true);
+            if (!App.Context.Profile.TrackPaths.Contains(path))
+            {
+                App.Context.Profile.TrackPaths.Add(path);
+            }
         }
     }
 
@@ -96,8 +104,10 @@ public partial class ConfigurationControl : UserControl
         var path = NewIgnorePathTextBox.Text;
         if (!string.IsNullOrEmpty(path) && Directory.Exists(path))
         {
-            App.Context.Profile.IgnorePaths.Add(path);
-            App.Context.RefreshProfileCache(true);
+            if (!App.Context.Profile.IgnorePaths.Contains(path))
+            {
+                App.Context.Profile.IgnorePaths.Add(path);
+            }
         }
     }
 

@@ -17,7 +17,30 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     TaskbarIcon _notifyIcon;
     SaveSync? _saveSync;
     LogLevel _logLevel;
+    IProfileProvider? _cachedProfileProvider;
     Profile? _cachedProfile;
+    IProfileProvider CachedProfileProvider => _cachedProfileProvider ??= DefaultFileProvider();
+    Profile? CachedProfile
+    {
+        get
+        {
+            if (_cachedProfile == null)
+            {
+                if (!File.Exists(Path.Combine(Settings.Default.WorkingDirectory, "profile.json")))
+                {
+                    var tryCreateDefault = CachedProfileProvider.TrySaveProfile(new ProfileVersionManagement().GetDefaultProfile());
+                    App.Current.LogMessage($"尝试在 {ProfilePath} 下创建默认配置{(tryCreateDefault ? "成功" : "失败")}");
+                    if (!tryCreateDefault) throw new InvalidOperationException($"创建默认配置文件 {ProfilePath} 失败");
+                }
+                if (!CachedProfileProvider.TryGetProfile(out _cachedProfile))
+                {
+                    throw new InvalidOperationException($"打开配置文件 {ProfilePath} 失败");
+                }
+                PropertyChanged?.Invoke(this, new(nameof(Profile)));
+            }
+            return _cachedProfile;
+        }
+    }
 
 
     public ILoggerFactory LoggerFactory => Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
@@ -30,7 +53,8 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
     ServiceProvider? _serviceProvider = null;
     public ServiceProvider ServiceProvider => _serviceProvider ??= RegisterServices();
 
-    FileProfileProvider DefaultFileProvider() => new FileProfileProvider(Path.Combine(Settings.Default.WorkingDirectory, "profile.json"));
+    string ProfilePath => Path.Combine(Settings.Default.WorkingDirectory, "profile.json");
+    FileProfileProvider DefaultFileProvider() => new(ProfilePath);
     ServiceProvider RegisterServices()
     {
         _services = new ServiceCollection();
@@ -68,11 +92,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
         set
         {
             if (value == _saveSync) return;
-            if (_cachedProfile != null)
-            {
-                DefaultFileProvider().TrySaveProfile(_cachedProfile);
-                _cachedProfile = null;
-            }
+            RefreshProfileCache();
             _saveSync?.Dispose();
             _saveSync = value;
             PropertyChanged?.Invoke(this, new(nameof(SaveSync)));
@@ -80,8 +100,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
         }
     }
 
-    // todo: 如果_cachedProfile不为null, 则创建SaveSync之前应该先保存
-    public Profile Profile => _saveSync?.Profile ?? (_cachedProfile ??= Profile.LoadProfile(ServiceProvider));
+    public Profile Profile => _saveSync?.Profile ?? CachedProfile;
 
     public AppContext()
     {
@@ -108,24 +127,25 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
                         _serviceProvider.Dispose();
                         _serviceProvider = _services.BuildServiceProvider();
                     }
+                    RefreshProfileCache();
                     break;
             }
         };
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
-
-    /// <summary>
-    /// 该调用会取消所有未保存的更改
-    /// </summary>
-    public void RefreshProfileCache(bool save = false)
+    public void RefreshProfileCache(bool notify = true)
     {
-        if (save && _cachedProfile != null)
+        if (_cachedProfile != null)
         {
-            DefaultFileProvider().TrySaveProfile(_cachedProfile);
+            _cachedProfileProvider.TrySaveProfile(_cachedProfile);
+            _cachedProfile = null;
+            _cachedProfileProvider = null;
         }
-        _cachedProfile = null;
-        PropertyChanged?.Invoke(this, new(nameof(Profile)));
+        if (notify)
+        {
+            PropertyChanged?.Invoke(this, new(nameof(Profile)));
+        }
     }
 
     static readonly Regex JapaneseRegex = new(@"[\u0800-\u4e00]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -166,6 +186,7 @@ internal class AppContext : INotifyPropertyChanged, IDisposable
         {
             if (disposing)
             {
+                RefreshProfileCache(false);
                 NotifyIcon.Dispose();
                 SaveSync?.Dispose();
             }
