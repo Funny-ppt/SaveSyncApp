@@ -8,11 +8,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace SaveSyncApp;
+namespace SaveSyncApp.IO;
 
 internal static class FolderHelper
 {
-    static void CopyOrOverwriteFolderOnBackground(BackgroundWorker worker, string sourceFolder, string destFolder, Action<FileSystemOperationPreview>? onOverwrite = null)
+    static void CopyOrOverwriteFolderOnBackground(BackgroundWorker worker, IDirectoryAccess sourceFolder, IDirectoryAccess destFolder, Action<OverwritePreview>? onOverwrite = null)
     {
         worker.WorkerReportsProgress = true;
         worker.DoWork += (sender, e) =>
@@ -21,7 +21,7 @@ internal static class FolderHelper
         };
     }
 
-    static void OverwriteDefaultHandler(FileSystemOperationPreview e)
+    static void OverwriteDefaultHandler(OverwritePreview e)
     {
         if (e.SourceInfo == null)
         {
@@ -56,7 +56,7 @@ internal static class FolderHelper
         }
     }
 
-    public static void CopyOrOverwriteFolder(string sourceFolder, string destFolder, Action<FileSystemOperationPreview>? onOverwrite = null)
+    public static void CopyOrOverwriteFolder(IDirectoryAccess sourceFolder, IDirectoryAccess destFolder, Action<OverwritePreview>? onOverwrite = null)
      => CopyOrOverwriteFolderImpl(sourceFolder, destFolder, onOverwrite ?? OverwriteDefaultHandler, null);
 
     /// <summary>
@@ -67,7 +67,7 @@ internal static class FolderHelper
     /// <param name="onOverwrite">当需要覆盖时，调用该函数以确认覆盖结果</param>
     /// <param name="reportProgress">回报进度函数（未实现）</param>
     /// <exception cref="ArgumentException">如果sourceFolder不存在，就会触发该异常</exception>
-    static void CopyOrOverwriteFolderImpl(string sourceFolder, string destFolder, Action<FileSystemOperationPreview>? onOverwrite, Action<int, int>? reportProgress)
+    static void CopyOrOverwriteFolderImpl(IDirectoryAccess sourceFolder, IDirectoryAccess destFolder, Action<OverwritePreview>? onOverwrite, Action<int, int>? reportProgress)
     {
         if (!Directory.Exists(sourceFolder))
         {
@@ -102,7 +102,7 @@ internal static class FolderHelper
                     continue;
                 }
 
-                var preview = new FileSystemOperationPreview(sourceInfo, destInfo);
+                var preview = new IO_OperationPreview(sourceInfo, destInfo);
                 onOverwrite?.Invoke(preview);
 
                 switch (preview.Action)
@@ -152,7 +152,7 @@ internal static class FolderHelper
                         continue;
                     }
 
-                    var preview = new FileSystemOperationPreview(null, new FileInfo(destFile));
+                    var preview = new IO_OperationPreview(null, new FileInfo(destFile));
                     onOverwrite?.Invoke(preview);
 
                     switch (preview.Action)
@@ -185,7 +185,7 @@ internal static class FolderHelper
                         continue;
                     }
 
-                    var preview = new FileSystemOperationPreview(null, new DirectoryInfo(destSubfolder));
+                    var preview = new IO_OperationPreview(null, new DirectoryInfo(destSubfolder));
                     onOverwrite?.Invoke(preview);
 
                     switch (preview.Action)

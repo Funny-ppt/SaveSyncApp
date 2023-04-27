@@ -1,4 +1,4 @@
-﻿namespace SaveSyncApp;
+﻿namespace SaveSyncApp.IO;
 
 public enum FileSystemAction
 {

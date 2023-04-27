@@ -1,15 +1,15 @@
 ﻿using System;
 using System.IO;
 
-namespace SaveSyncApp;
+namespace SaveSyncApp.IO;
 
-public class FileSystemOperationPreview : EventArgs
+public class OverwritePreview
 {
-    public FileSystemInfo? SourceInfo;
-    public FileSystemInfo DestinationInfo;
+    public CommonFileSystemInfo? SourceInfo;
+    public CommonFileSystemInfo DestinationInfo;
     public FileSystemAction Action = FileSystemAction.Overwrite;
 
-    public FileSystemOperationPreview(FileSystemInfo? sourceInfo, FileSystemInfo destinationInfo)
+    public OverwritePreview(CommonFileSystemInfo? sourceInfo, CommonFileSystemInfo destinationInfo)
     {
         SourceInfo = sourceInfo;
         DestinationInfo = destinationInfo ?? throw new ArgumentException(null, nameof(destinationInfo));
