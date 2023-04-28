@@ -14,4 +14,9 @@ public class OverwritePreview
         SourceInfo = sourceInfo;
         DestinationInfo = destinationInfo ?? throw new ArgumentException(null, nameof(destinationInfo));
     }
+    public OverwritePreview(IHasCommonFileSystemInfo? sourceInfo, IHasCommonFileSystemInfo destinationInfo)
+    {
+        SourceInfo = sourceInfo?.GetCommonFileSystemInfo();
+        DestinationInfo = destinationInfo?.GetCommonFileSystemInfo() ?? throw new ArgumentException(null, nameof(destinationInfo));
+    }
 }

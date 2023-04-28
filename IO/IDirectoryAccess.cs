@@ -1,10 +1,9 @@
-﻿using SaveSyncApp.IO;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
-namespace SaveSyncApp;
+namespace SaveSyncApp.IO;
 
-// 思考：是否允许创建一个不存在的文件、目录的Access？
 public interface IDirectoryAccess : IHasCommonFileSystemInfo
 {
     string Name { get; }
@@ -15,5 +14,6 @@ public interface IDirectoryAccess : IHasCommonFileSystemInfo
     IDirectoryAccess? GetDirectory(string name);
     IFileAccess? GetFile(string name);
     IDirectoryAccess CreateSubdirectory(string name);
+    Stream CreateFile(string name);
     void Delete(bool recursive);
 }

@@ -112,6 +112,13 @@
                         <RowDefinition/>
                     </d:Grid.RowDefinitions>
 
+                    <Label Style="{StaticResource AttrNameStyle}" Content="启用压缩存档"/>
+                    <CheckBox Grid.Column="1" VerticalAlignment="Center" Margin="4"
+                              IsChecked="{Binding EnableCompression, Mode=TwoWay}">
+                        <CheckBox.LayoutTransform>
+                            <ScaleTransform ScaleX="2" ScaleY="2" />
+                        </CheckBox.LayoutTransform>
+                    </CheckBox>
                     <ListBox x:Name="TrackPathsListBox" Grid.ColumnSpan="4" ItemsSource="{Binding TrackPaths}"/>
                     <Label Style="{StaticResource AttrNameStyle}" Content="新增跟踪目录" d:Grid.Row="1"/>
                     <TextBox x:Name="NewTrackPathTextBox" Style="{StaticResource AttrValueStyle}" d:Grid.Row="1" />

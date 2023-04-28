@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Threading;
 using System.Text.RegularExpressions;
+using SaveSyncApp.IO;
 
 namespace SaveSyncApp;
 
@@ -23,6 +24,7 @@ internal class SaveSync : IDisposable
     readonly ILogger<SaveSync>? _logger;
     readonly INotificationProvider? _notificationProvider;
     readonly IUserRequestProvider? _userRequestProvider;
+    readonly IPathToDirectoryAccess? _pathToDirectoryAccess;
     readonly ITrackPathProvider _trackPathProvider;
     readonly IProfileProvider _profileProvider;
 
@@ -55,6 +57,7 @@ internal class SaveSync : IDisposable
         _logger?.LogDebug("SaveSync正在输出调试日志");
         _notificationProvider = services.GetService<INotificationProvider>();
         _userRequestProvider = services.GetService<IUserRequestProvider>();
+        _pathToDirectoryAccess = services.GetService<IPathToDirectoryAccess>();
         _trackPathProvider = services.GetRequiredService<ITrackPathProvider>();
         _profileProvider = services.GetRequiredService<IProfileProvider>();
         _profile = Profile.LoadProfile(services);
@@ -102,9 +105,9 @@ internal class SaveSync : IDisposable
             {
                 if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
                 {
-                    _logger.LogTrace("current match: {}", nameof(SteamDefaultMatch));
-                    _logger.LogTrace("words: {words}", string.Join(", ", words));
-                    _logger.LogTrace("full path: {path}", e.ChangedFile);
+                    _logger.LogDebug("current match: {}", nameof(SteamDefaultMatch));
+                    _logger.LogDebug("words: {words}", string.Join(", ", words));
+                    _logger.LogDebug("full path: {path}", e.ChangedFile);
                 }
             }
         }
@@ -129,9 +132,9 @@ internal class SaveSync : IDisposable
         {
             if (_logger != null && _logger.IsEnabled(LogLevel.Trace))
             {
-                _logger.LogTrace("current match: {}", nameof(FullScreenDefaultMatch));
-                _logger.LogTrace("save words: {words}", string.Join(", ", saveWords));
-                _logger.LogTrace("executable words: {words}", string.Join(", ", executableWords));
+                _logger.LogDebug("current match: {}", nameof(FullScreenDefaultMatch));
+                _logger.LogDebug("save words: {words}", string.Join(", ", saveWords));
+                _logger.LogDebug("executable words: {words}", string.Join(", ", executableWords));
             }
         }
     }
@@ -149,6 +152,25 @@ internal class SaveSync : IDisposable
                       $"是否确定为存档位置?";
         _userRequestProvider.ShowRequest(NotificationId.RequestUserConfirm, message,
             new []{("确定", "confirm"), ("取消", "cancel")}, callback);
+    }
+
+    // todo
+    void CopyOrOverwriteFolder(string sourcePath, string destPath)
+    {
+        if (_profile.EnableCompression)
+        {
+            var zipPath = Path.Combine(destPath, Path.GetFileName(sourcePath) + ".zip");
+            using var access = File.Exists(zipPath) ? new ZipDirectoryAccess(zipPath) : ZipDirectoryAccess.Create(zipPath);
+            FolderHelper.CopyOrOverwriteFolder(new NativeDirectoryAccess(sourcePath), access);
+        }
+        else
+        {
+            if (!Directory.Exists(destPath))
+            {
+                Directory.CreateDirectory(destPath);
+            }
+            FolderHelper.CopyOrOverwriteFolder(new NativeDirectoryAccess(sourcePath), _pathToDirectoryAccess?.FromPath(destPath) ?? new NativeDirectoryAccess(destPath));
+        }
     }
 
     void AddWatcher(string path)
@@ -202,11 +224,20 @@ internal class SaveSync : IDisposable
                 _notificationProvider?.ShowNotification(NotificationId.NotifyTracing, $"正在跟踪进程 {processName}, 将在进程退出时备份存档");
                 process.WaitForExit();
                 _logger?.LogInformation("进程 {processName} 结束, 正在备份存档中", processName);
-                FolderHelper.CopyOrOverwriteFolder(saveFolder, _savesDirectory);
-                _profile[processName].RecentChangeDate = DateTime.UtcNow;
-                _logger?.LogInformation("进程 {processName} 的存档已经备份完成", processName);
-                _notificationProvider?.ShowNotification(NotificationId.NotifySaveSuccess, $"进程{processName}的存档已经备份完成");
-                _trackedProcesses.TryRemove(processId, out _);
+                try
+                {
+                    CopyOrOverwriteFolder(saveFolder, _savesDirectory);
+                    _profile[processName].RecentChangeDate = DateTime.UtcNow;
+                    _logger?.LogInformation("进程 {processName} 的存档已经备份完成", processName);
+                    _notificationProvider?.ShowNotification(NotificationId.NotifySaveSuccess, $"进程{processName}的存档已经备份完成");
+                    _trackedProcesses.TryRemove(processId, out _);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError("保存游戏 {processName} 的存档失败:", processName);
+                    _logger?.LogError("Error: {ex}", ex.Message);
+                    _logger?.LogDebug("{StackTrace}\n\n", ex.StackTrace);
+                }
             }
 
             if (_profile.Items.ContainsKey(processName)) // 如果配置文件已经记录次进程，则跳过目录识别
@@ -397,6 +428,8 @@ internal class SaveSync : IDisposable
                 _profile.TrackPaths = new(_trackPathProvider.GetPaths().Select(SpecialFolders.ReplacePathsWithPlaceholds));
                 _profile.IgnorePaths = new(_trackPathProvider.GetIgnorePaths().Select(SpecialFolders.ReplacePathsWithPlaceholds));
                 _profileProvider.TrySaveProfile(_profile);
+
+                _logger?.LogInformation("SaveSync已关闭");
             }
 
             // 释放未托管的资源(未托管的对象)并重写终结器

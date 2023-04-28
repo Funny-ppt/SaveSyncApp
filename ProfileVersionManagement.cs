@@ -9,7 +9,7 @@ internal class ProfileVersionManagement : IProfileVersionManagement
     public static readonly IEnumerable<string> DefaultTrackPaths = new[] { ApplicationDataPlaceholder, ApplicationDataPlaceholder2, DocumentPlaceholder };
     readonly static string _qqDataFolder = Path.Combine(DocumentFolder, "Tencent Files");
     public static readonly IEnumerable<string> DefaultIgnorePaths = new[] { _qqDataFolder };
-    public int CurrentVersion => 2;
+    public int CurrentVersion => 3;
 
     public Profile GetDefaultProfile() => new()
     {
@@ -40,6 +40,18 @@ internal class ProfileVersionManagement : IProfileVersionManagement
         profile.IgnorePaths = new(DefaultIgnorePaths);
     }
 
+    void UpdateToV3(Profile profile)
+    {
+        if (profile.Version >= 3)
+        {
+            return;
+        }
+        UpdateToV2(profile);
+        profile.Version = 3;
+
+        profile.EnableCompression = false;
+    }
+
     // 更新模板
     // void UpdateToVx(Profile profile)
     // {
@@ -55,6 +67,6 @@ internal class ProfileVersionManagement : IProfileVersionManagement
     public void UpdateToCurrentVersion(Profile profile)
     {
         // 每当更新新版本时，修改该函数到最新版
-        UpdateToV2(profile);
+        UpdateToV3(profile);
     }
 }

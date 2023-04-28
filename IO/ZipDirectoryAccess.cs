@@ -5,10 +5,11 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System;
+using System.Text.RegularExpressions;
 
 namespace SaveSyncApp.IO;
 
-public class ZipDirectoryAccess : IDirectoryAccess
+public class ZipDirectoryAccess : IDirectoryAccess, IDisposable
 {
     private ZipArchive _zipArchive;
     private string? _zipArchivePath;
@@ -26,7 +27,18 @@ public class ZipDirectoryAccess : IDirectoryAccess
         _zipEntry = zipEntry;
     }
 
-    public string Name => _zipEntry != null ? _zipEntry.Name : Path.GetFileName(_zipArchivePath);
+    private ZipDirectoryAccess() { }
+
+    public static ZipDirectoryAccess Create(string zipFilePath)
+    {
+        return new ZipDirectoryAccess()
+        {
+            _zipArchive = new ZipArchive(File.Create(zipFilePath), ZipArchiveMode.Update),
+            _zipArchivePath = zipFilePath
+        };
+    }
+
+    public string Name => _zipEntry != null ? Regex.Match(_zipEntry.FullName, @"^([^/]+/)*([^/]+)/$").Groups[2].Value : Path.GetFileNameWithoutExtension(_zipArchivePath);
 
     public DateTime LastWriteTimeUtc => _zipEntry != null ? _zipEntry.LastWriteTime.UtcDateTime : File.GetLastWriteTimeUtc(_zipArchivePath);
 
@@ -39,17 +51,17 @@ public class ZipDirectoryAccess : IDirectoryAccess
 
     public IEnumerable<IDirectoryAccess> GetDirectories()
     {
-        var pathPrefix = _zipEntry?.FullName;
+        var pathPrefix = _zipEntry?.FullName ?? string.Empty;
         return _zipArchive.Entries
-            .Where(entry => entry.FullName.EndsWith("/") && (pathPrefix == null || entry.FullName.StartsWith(pathPrefix)))
+            .Where(entry => Regex.IsMatch(entry.FullName, $@"^{Regex.Escape(pathPrefix)}[^/]+/$"))
             .Select(entry => new ZipDirectoryAccess(entry));
     }
 
     public IEnumerable<IFileAccess> GetFiles()
     {
-        var pathPrefix = _zipEntry?.FullName;
+        var pathPrefix = _zipEntry?.FullName ?? string.Empty;
         return _zipArchive.Entries
-            .Where(entry => !entry.FullName.EndsWith("/") && (pathPrefix == null || entry.FullName.StartsWith(pathPrefix)))
+            .Where(entry => Regex.IsMatch(entry.FullName, $@"^{Regex.Escape(pathPrefix)}[^/]+$"))
             .Select(entry => new ZipFileAccess(entry));
     }
 
@@ -77,6 +89,13 @@ public class ZipDirectoryAccess : IDirectoryAccess
         {
             return new ZipDirectoryAccess(_zipArchive.CreateEntry(name + "/"));
         }
+    }
+
+    public Stream CreateFile(string name)
+    {
+        var entry = _zipArchive.CreateEntry(
+            _zipEntry != null ? Path.Combine(_zipEntry.FullName, name) : name);
+        return entry.Open();
     }
 
     public void Delete(bool recursive)

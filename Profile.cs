@@ -10,6 +10,7 @@ namespace SaveSyncApp;
 public class Profile
 {
     public int Version { get; set; }
+    public bool EnableCompression { get; set; }
     public ConcurrentDictionary<string, ProfileItem>? Items { get; set; }
 
     public ObservableCollection<string>? TrackPaths { get; set; }

@@ -9,6 +9,7 @@ public class NativeFileAccess : IFileAccess
 
     public NativeFileAccess(string path)
     {
+        if (!File.Exists(path)) throw new ArgumentException(null, nameof(path));
         _fileInfo = new FileInfo(path);
     }
 

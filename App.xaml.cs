@@ -85,7 +85,7 @@ $@"发生异常: {e.Exception.Message}
     }
     public void ShowNotification(int id, string message, bool important = false)
     {
-        LogMessage($"(AppNotification{(important? ",Important" : "")}) [{id}] {message}");
+        LogMessage($"(通知) [{id}] {message}");
         NotificationHelper.ShowNotification(id, message, important);
     }
 }

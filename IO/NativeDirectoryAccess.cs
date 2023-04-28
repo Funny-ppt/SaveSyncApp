@@ -35,19 +35,26 @@ public class NativeDirectoryAccess : IDirectoryAccess
         return _directoryInfo.GetDirectories().Select(dir => new NativeDirectoryAccess(dir.FullName));
     }
 
-    public IDirectoryAccess GetDirectory(string name)
+    public IDirectoryAccess? GetDirectory(string name)
     {
-        return new NativeDirectoryAccess(Path.Combine(_directoryInfo.FullName, name));
+        var path = Path.Combine(_directoryInfo.FullName, name);
+        return Directory.Exists(path) ? new NativeDirectoryAccess(Path.Combine(_directoryInfo.FullName, name)) : null;
     }
 
-    public IFileAccess GetFile(string name)
+    public IFileAccess? GetFile(string name)
     {
-        return new NativeFileAccess(Path.Combine(_directoryInfo.FullName, name));
+        var path = Path.Combine(_directoryInfo.FullName, name);
+        return File.Exists(path) ? new NativeFileAccess(path) : null;
     }
 
     public IDirectoryAccess CreateSubdirectory(string name)
     {
         return new NativeDirectoryAccess(_directoryInfo.CreateSubdirectory(name).FullName);
+    }
+
+    public Stream CreateFile(string name)
+    {
+        return File.Create(Path.Combine(_directoryInfo.FullName, name));
     }
 
     public void Delete(bool recursive)

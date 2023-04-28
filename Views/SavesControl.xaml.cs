@@ -1,9 +1,11 @@
-﻿using SaveSyncApp.Properties;
+﻿using SaveSyncApp.IO;
+using SaveSyncApp.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -74,9 +76,18 @@ public partial class SavesControl : UserControl
         {
             try
             {
-                await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(
-                    item.GetSyncSaveFolder(), Path.GetDirectoryName(item.ReplacedSavePath))
-                );
+                if (App.Context.Profile.EnableCompression)
+                {
+                    using var sourceAccess = new ZipDirectoryAccess(item.GetSyncSaveArchive());
+                    await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(
+                        sourceAccess.GetDirectories().First(), // 第一个文件夹总是要拷贝的根目录
+                        new NativeDirectoryAccess(Path.GetDirectoryName(item.ReplacedSavePath))
+                    ));
+                }
+                else
+                {
+                    await Task.Run(() => FolderHelper.CopyOrOverwriteFolder(item.GetSyncSaveFolder(), Path.GetDirectoryName(item.ReplacedSavePath)));
+                }
                 if (!notify)
                 {
                     App.Current.LogMessage($"游戏 {item.UserFriendlyName} 的存档已经成功加载");
@@ -86,9 +97,10 @@ public partial class SavesControl : UserControl
                     App.Current.ShowNotification(AppNotificationId.NotifyLoadSuccess, $"游戏 {item.UserFriendlyName} 的存档已经成功加载", true);
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 App.Current.ShowNotification(AppNotificationId.ErrorFailToSave, $"游戏 {item.UserFriendlyName} 的存档加载失败", true);
+                App.Current.LogMessage($"{ex.Message}");
                 throw;
             }
         }
@@ -106,8 +118,8 @@ public partial class SavesControl : UserControl
     {
         if (sender is Button button && button.Tag is ProfileItem item)
         {
-            var syncSaveFolder = item.GetSyncSaveFolder();
-            var exists = Directory.Exists(syncSaveFolder);
+            var syncSaveFolder = App.Context.Profile.EnableCompression ? item.GetSyncSaveArchive() : item.GetSyncSaveFolder();
+            var exists = App.Context.Profile.EnableCompression ? File.Exists(syncSaveFolder) : Directory.Exists(syncSaveFolder);
             Process.Start("explorer.exe", exists ? syncSaveFolder : Path.Combine(Settings.Default.WorkingDirectory, "Saves"));
         }
     }
@@ -125,7 +137,14 @@ public partial class SavesControl : UserControl
 
             if (result == MessageBoxResult.Yes)
             {
-                Directory.Delete(item.GetSyncSaveFolder(), true);
+                if (App.Context.Profile.EnableCompression)
+                {
+                    File.Delete(item.GetSyncSaveArchive());
+                }
+                else
+                {
+                    Directory.Delete(item.GetSyncSaveFolder(), true);
+                }
                 App.Context.Profile.Items.Remove(item.ProcessName, out _);
                 Model.RefreshProfileCache();
             }
@@ -136,7 +155,18 @@ public partial class SavesControl : UserControl
     {
         if (sender is Button button && button.Tag is ProfileItem item)
         {
-            FolderHelper.CopyOrOverwriteFolder(item.ReplacedSavePath, Path.Combine(Settings.Default.WorkingDirectory, "Saves"));
+
+            if (App.Context.Profile.EnableCompression)
+            {
+                using var sourceAccess = new ZipDirectoryAccess(item.GetSyncSaveArchive());
+                FolderHelper.CopyOrOverwriteFolder(
+                    new NativeDirectoryAccess(item.ReplacedSavePath), sourceAccess
+                );
+            }
+            else
+            {
+                FolderHelper.CopyOrOverwriteFolder(item.ReplacedSavePath, Path.Combine(Settings.Default.WorkingDirectory, "Saves"));
+            }
             item.RecentChangeDate = DateTime.UtcNow;
             App.Current.ShowNotification(AppNotificationId.NotifySyncSuccess, $"{item.UserFriendlyName} 的存档已经备份完成");
         }
